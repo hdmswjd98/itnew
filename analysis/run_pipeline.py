@@ -21,8 +21,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from validate import run_validation as step1_validate
-from merge_data import merge_data as step2_merge
-from calc_metrics import calc_metrics as step3_metrics
+from load_data import load_data as step2_load
+from merge_data import merge_data as step3_merge
+from calc_metrics import calc_metrics as step4_metrics
 from score_churn import score_churn as step4_churn
 from classify import classify_groups as step5_classify
 from analyze_patterns import analyze_patterns as step6_pattern
@@ -45,13 +46,14 @@ def run_pipeline():
     # 파이프라인 각 단계 실행
     steps = [
         ("1. 데이터 검증", step1_validate),
-        ("2. 데이터 병합", step2_merge),
-        ("3. 고객별 지표 계산", step3_metrics),
-        ("4. 이탈 위험 점수 산정", step4_churn),
-        ("5. 고객군 분류", step5_classify),
-        ("6. 패턴 분석", step6_pattern),
-        ("7. 최종 검증", step7_validate),
-        ("8. 보고서 생성", step8_report),
+        ("2. 데이터 로드", step2_load),
+        ("3. 데이터 병합", step3_merge),
+        ("4. 고객별 지표 계산", step4_metrics),
+        ("5. 이탈 위험 점수 산정", step4_churn),
+        ("6. 고객군 분류", step5_classify),
+        ("7. 패턴 분석", step6_pattern),
+        ("8. 최종 검증", step7_validate),
+        ("9. 보고서 생성", step8_report),
     ]
 
     for step_name, step_func in steps:
@@ -72,7 +74,7 @@ def run_pipeline():
     print("\n생성된 산출물:")
     print("  - validation_results.csv     (데이터 검증 결과)")
     print("  - invalid_records.csv        (제외 데이터)")
-    print("  - valid_orders_raw.csv       (유효 주문 데이터)")
+    print("  - valid_orders_raw.csv       (유효 주문 데이터)  ← 2단계 로드에서 생성")
     print("  - merged_data.csv            (통합 데이터셋)")
     print("  - customer_metrics.csv       (고객별 이용 지표)")
     print("  - churn_scores.csv           (이탈 위험 점수)")

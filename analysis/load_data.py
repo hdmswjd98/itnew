@@ -9,7 +9,7 @@ from pathlib import Path
 
 def load_data():
     """데이터 로드 및 기본 구조 확인"""
-    workspace = Path(__file__).parent
+    workspace = Path(__file__).parent.parent  # 프로젝트 루트 (analysis/ 의 상위 디렉토리)
     files = ["members.csv", "orders.csv", "deliveries.csv", "invalid_orders.csv"]
     loaded = {}
 

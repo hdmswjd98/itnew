@@ -1,38 +1,14 @@
-# Python
+# Product Analysis
+output/
 __pycache__/
 *.pyc
-*.pyo
-.env
-.venv/
-venv/
-*.egg-info/
-dist/
-build/
-
-# Streamlit
-.streamlit/secrets.toml
-
-# 캐시 및 임시 파일
-*.cache
-*.tmp
-
-# OS
-.DS_Store
-Thumbs.db
-
-# 데이터 파일 — 개인정보 보호를 위해 Git 에서 제외
-# 개발/테스트용으로 샘플 데이터를 사용하려면 아래를 주석 해제
-# members.csv
-# orders.csv
-# deliveries.csv
-# invalid_orders.csv
-
-# 분석 결과 (실시간 재생성되므로 Git 에 불필요)
-customer_analysis_result.md
+data/members.csv
+data/orders.csv
+data/deliveries.csv
+data/invalid_orders.csv
 customer_metrics.csv
 customer_groups.csv
 churn_risk_customers.csv
-churn_scores.csv
 region_analysis.csv
 industry_analysis.csv
 product_analysis.csv
@@ -40,15 +16,8 @@ ai_summary.txt
 validation_results.csv
 validation_final.csv
 invalid_records.csv
-valid_orders.csv
-merged_data.csv
-
-# Timely 스킬 디렉토리 (pip install 또는 별도 clone 으로 관리)
-.pi/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-EOF
+customer_analysis_result.md
+streamlit_dashboard.py
+analysis/
+artifacts/
+.env

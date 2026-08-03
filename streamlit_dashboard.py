@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
+from streamlit_plotly_events import plotly_events
 
 DATA_OUTPUT_DIR = Path(__file__).resolve().parent / "data" / "output"
 
@@ -159,14 +160,75 @@ avg_order_count = metrics_df['주문 횟수'].mean() if len(metrics_df) > 0 else
 valid_count = len(validation_df[validation_df['상태'] == '통과']) if len(validation_df) > 0 else 0
 total_validation = len(validation_df) if len(validation_df) > 0 else 0
 
+# ==================== 세션 상태 ====================
+if 'selected_group' not in st.session_state:
+    st.session_state.selected_group = '전체'
+
 # ==================== 사이드바 ====================
 with st.sidebar:
     st.title("🏢 잇뉴")
-    st.caption("고객 분석 대시보드")
+    st.caption("통합 분석 플랫폼")
     st.divider()
-    st.caption(f"기준일: {conditions.get('분석 기준일', datetime.now().strftime('%Y-%m-%d'))}")
-    st.caption(f"분석대상: {total_customers}명")
-    st.caption("데이터: CSV (60초 갱신)")
+
+    if st.button("🏠 홈으로 돌아가기", width='stretch'):
+        st.query_params.clear()
+        st.session_state.selected_group = '전체'
+        st.rerun()
+
+    dashboard_options = {
+        'customer': '👥 고객분석',
+        'monthly': '📅 월간리포트',
+        'product': '📦 품목 자동분류 및 분석',
+    }
+    current_dashboard = st.query_params.get('dashboard', 'customer')
+    if current_dashboard not in dashboard_options:
+        current_dashboard = 'customer'
+
+    st.caption("대시보드")
+    for dashboard_key, dashboard_label in dashboard_options.items():
+        is_selected = dashboard_key == current_dashboard
+        if st.button(
+            dashboard_label,
+            key=f"nav_{dashboard_key}",
+            type='primary' if is_selected else 'secondary',
+            width='stretch',
+        ) and not is_selected:
+            st.query_params.clear()
+            if dashboard_key != 'customer':
+                st.query_params['dashboard'] = dashboard_key
+            st.session_state.selected_group = '전체'
+            st.rerun()
+
+    st.divider()
+    if current_dashboard == 'customer':
+        st.caption(f"기준일: {conditions.get('분석 기준일', datetime.now().strftime('%Y-%m-%d'))}")
+        st.caption(f"분석대상: {total_customers}명")
+        st.caption("데이터: CSV (60초 갱신)")
+
+
+if current_dashboard == 'monthly':
+    st.title("📅 월간리포트")
+    st.info("월간 분석 결과를 자동으로 정리하는 대시보드입니다. 현재 준비 중입니다.")
+    st.markdown("""
+    앞으로 제공할 기능:
+
+    - 월별 고객·매출 핵심 지표
+    - 전월 대비 증감 분석
+    - 월간 리포트 미리보기 및 다운로드
+    """)
+    st.stop()
+
+if current_dashboard == 'product':
+    st.title("📦 품목 자동분류 및 분석")
+    st.info("품목 자동분류와 수요 분석 대시보드입니다. 현재 준비 중입니다.")
+    st.markdown("""
+    앞으로 제공할 기능:
+
+    - 품목명 자동 카테고리 분류
+    - 품목별 주문량·매출 분석
+    - 인기 품목과 수요 추이 확인
+    """)
+    st.stop()
 
 # ==================== 커스텀 CSS ====================
 st.markdown("""
@@ -190,12 +252,95 @@ st.markdown("""
   .progress-track { background: #2a2d3e; border-radius: 4px; height: 8px; }
   .progress-fill { height: 100%; border-radius: 4px; }
   .target-bar { background: linear-gradient(90deg, #00b894 0%, #00b894 var(--pct), #2a2d3e var(--pct), #2a2d3e 100%); border-radius: 4px; height: 24px; }
+  iframe[title="streamlit_plotly_events.plotly_events"] {
+    background: #0f1117 !important;
+    border: 0 !important;
+    border-radius: 12px;
+  }
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== 세션 상태: 선택된 고객군 ====================
-if 'selected_group' not in st.session_state:
-    st.session_state.selected_group = '전체'
+def render_group_detail(group_name):
+    """선택한 고객군의 전용 상세 화면을 렌더링한다."""
+    if st.button("← 전체 현황으로 돌아가기", type="secondary"):
+        st.query_params.clear()
+        st.session_state.selected_group = '전체'
+        st.rerun()
+
+    detail_df = groups_df[groups_df['고객군'] == group_name].copy()
+    customer_ids = detail_df['customer_id'] if 'customer_id' in detail_df.columns else []
+    detail_metrics = metrics_df[metrics_df['customer_id'].isin(customer_ids)].copy()
+    detail_churn = churn_df[churn_df['customer_id'].isin(customer_ids)].copy() if len(churn_df) > 0 else pd.DataFrame()
+    detail_region = region_df[region_df['고객군'] == group_name].copy() if '고객군' in region_df.columns else pd.DataFrame()
+    detail_industry = industry_df[industry_df['고객군'] == group_name].copy() if '고객군' in industry_df.columns else pd.DataFrame()
+    detail_product = product_df[product_df['고객군'] == group_name].copy() if '고객군' in product_df.columns else pd.DataFrame()
+
+    st.title(f"📋 {group_name} 상세 분석")
+    st.caption("고객군 분포 차트에서 선택한 그룹의 지표와 특성을 보여줍니다.")
+    st.divider()
+
+    count_val = len(detail_df)
+    risk_count = len(detail_df[detail_df['이탈 상태'].isin(['위험', '주의'])]) if '이탈 상태' in detail_df.columns else 0
+    avg_orders = pd.to_numeric(detail_metrics.get('주문 횟수'), errors='coerce').mean() if len(detail_metrics) > 0 else 0
+    avg_revenue = pd.to_numeric(detail_metrics.get('누적 이용 금액(원)'), errors='coerce').mean() if len(detail_metrics) > 0 else 0
+
+    summary_cols = st.columns(4)
+    summary_cols[0].metric("고객 수", f"{count_val}명")
+    summary_cols[1].metric("이탈 주의·위험", f"{risk_count}명")
+    summary_cols[2].metric("평균 주문 횟수", f"{avg_orders:.1f}회")
+    summary_cols[3].metric("평균 누적 금액", f"{avg_revenue:,.0f}원")
+
+    profile_tab, churn_tab, region_tab, industry_tab, product_tab = st.tabs([
+        "📊 고객 프로필", "⚠️ 이탈 위험", "🗺️ 지역", "🏭 업종", "📦 품목"
+    ])
+
+    with profile_tab:
+        if len(detail_df) > 0:
+            profile_columns = [c for c in ['customer_id', '고객군', '이탈 상태', '이탈 등급', '판단 근거'] if c in detail_df.columns]
+            st.dataframe(detail_df[profile_columns], width='stretch', hide_index=True)
+        if len(detail_metrics) > 0:
+            st.markdown("#### 고객별 이용 지표")
+            st.dataframe(detail_metrics, width='stretch', hide_index=True)
+
+    with churn_tab:
+        if len(detail_churn) > 0:
+            st.dataframe(detail_churn, width='stretch', hide_index=True)
+        else:
+            st.success("이 고객군에는 이탈 위험 고객이 없습니다.")
+
+    with region_tab:
+        if len(detail_region) > 0:
+            fig = px.bar(detail_region, x='region', y='고객 수', color='고객군', title=f'{group_name} 지역 분포')
+            st.plotly_chart(fig, width='stretch', config={'displayModeBar': False})
+            st.dataframe(detail_region, width='stretch', hide_index=True)
+        else:
+            st.info("지역 분석 데이터가 없습니다.")
+
+    with industry_tab:
+        if len(detail_industry) > 0:
+            fig = px.bar(detail_industry, x='industry', y='고객 수', color='고객군', title=f'{group_name} 업종 분포')
+            st.plotly_chart(fig, width='stretch', config={'displayModeBar': False})
+            st.dataframe(detail_industry, width='stretch', hide_index=True)
+        else:
+            st.info("업종 분석 데이터가 없습니다.")
+
+    with product_tab:
+        if len(detail_product) > 0:
+            product_chart = detail_product.copy()
+            product_chart['주문_금액'] = pd.to_numeric(product_chart['주문_금액'], errors='coerce')
+            fig = px.bar(product_chart, x='item_name', y='주문_금액', color='고객군', title=f'{group_name} 품목별 주문 금액')
+            st.plotly_chart(fig, width='stretch', config={'displayModeBar': False})
+            st.dataframe(detail_product, width='stretch', hide_index=True)
+        else:
+            st.info("품목 분석 데이터가 없습니다.")
+
+
+detail_group = st.query_params.get('group')
+valid_groups = {'신규 고객', '재이용 고객', '이탈 위험 고객', '일반 고객'}
+if detail_group in valid_groups:
+    st.session_state.selected_group = detail_group
+    render_group_detail(detail_group)
+    st.stop()
 
 # ==================== 헤더 ====================
 st.title("🏢 잇뉴 고객 분석 대시보드")
@@ -227,22 +372,20 @@ with col_left:
     fig_doughnut.update_layout(
         showlegend=True,
         legend=dict(
-            orientation='v',
-            yanchor='middle',
-            y=0.5,
-            xanchor='right',
-            x=1.15,
-            bgcolor='rgba(26,29,46,0.9)',
-            bordercolor='#2a2d3e',
-            borderwidth=1,
-            font=dict(color='#e4e6f0', size=13)
+            orientation='h',
+            yanchor='top',
+            y=-0.08,
+            xanchor='center',
+            x=0.5,
+            bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#e4e6f0', size=12)
         ),
-        margin=dict(l=20, r=120, t=10, b=10),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=20, r=20, t=15, b=65),
+        paper_bgcolor='#0f1117',
+        plot_bgcolor='#0f1117',
         font=dict(color='#e4e6f0', size=13),
-        width=340,
-        height=340,
+        autosize=True,
+        height=400,
         annotations=[dict(
             text=f'{total_customers}명',
             font_size=22,
@@ -252,23 +395,24 @@ with col_left:
             x=0.5, y=0.5
         )]
     )
-    st.plotly_chart(fig_doughnut, use_container_width=True, config={'displayModeBar': False})
-
-    # 상세 보기 버튼 (차트 클릭 대신 버튼으로 선택)
-    st.divider()
-    st.caption("📌 고객군 선택:")
-    group_options = ['전체'] + ([g for g in ['신규 고객', '재이용 고객', '이탈 위험 고객', '일반 고객'] if len(groups_df[groups_df['고객군'] == g]) > 0])
-    selected = st.radio(
-        "고객군 선택",
-        options=group_options,
-        index=group_options.index(st.session_state.selected_group) if st.session_state.selected_group in group_options else 0,
-        label_visibility='collapsed',
-        key=None,
-        horizontal=True
+    selected_points = plotly_events(
+        fig_doughnut,
+        click_event=True,
+        select_event=False,
+        hover_event=False,
+        override_height=420,
+        override_width='100%',
+        key='customer_group_chart'
     )
-    if selected != st.session_state.selected_group:
-        st.session_state.selected_group = selected
-        st.rerun()
+    if selected_points:
+        point_number = selected_points[0].get('pointNumber')
+        group_labels = ['신규 고객', '재이용 고객', '이탈 위험 고객', '일반 고객']
+        clicked_group = group_labels[point_number] if isinstance(point_number, int) and point_number < len(group_labels) else None
+        if clicked_group in valid_groups:
+            st.query_params['group'] = clicked_group
+            st.session_state.selected_group = clicked_group
+            st.rerun()
+    st.caption("💡 원 그래프의 고객군 영역을 클릭하면 상세 분석 화면으로 이동합니다.")
 
 with col_right:
     st.markdown('<p class="section-title">🎯 기업 달성 목표 (KPI)</p>', unsafe_allow_html=True)
@@ -310,6 +454,9 @@ with col_right:
       <span style="color:#fdcb6e;font-weight:600;">{mau_pct*100:.1f}% 달성</span>
     </div>
     """, unsafe_allow_html=True)
+
+# 메인 화면에서는 기존 인라인 상세 영역을 렌더링하지 않는다.
+st.stop()
 
 # ==================== [[선택된 고객군 상세 뷰]] ====================
 st.divider()

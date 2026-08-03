@@ -4,17 +4,17 @@ data-loader: 회원·주문·배송 CSV 파일을 로드하고 기본 구조를 
 
 import pandas as pd
 import sys
-from pathlib import Path
+from paths import INPUT_DIR, OUTPUT_DIR, ensure_data_dirs
 
 
 def load_data():
     """데이터 로드 및 기본 구조 확인"""
-    workspace = Path(__file__).parent.parent  # 프로젝트 루트 (analysis/ 의 상위 디렉토리)
+    ensure_data_dirs()
     files = ["members.csv", "orders.csv", "deliveries.csv", "invalid_orders.csv"]
     loaded = {}
 
     for fname in files:
-        fpath = workspace / fname
+        fpath = INPUT_DIR / fname
         if not fpath.exists():
             print(f"[ERROR] {fname} 파일을 찾을 수 없습니다: {fpath}")
             continue
@@ -52,7 +52,7 @@ def load_data():
     print(f"  제외된 행: {len(orders) - len(valid_orders)}건")
 
     # 저장
-    valid_orders.to_csv(workspace / "valid_orders_raw.csv", index=False)
+    valid_orders.to_csv(OUTPUT_DIR / "valid_orders_raw.csv", index=False)
     print(f"  저장: valid_orders_raw.csv")
 
     return loaded, valid_orders

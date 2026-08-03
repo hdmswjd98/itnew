@@ -3,8 +3,8 @@ customer-classifier: 고객군 분류와 이탈 위험 등급을 최종 결정�
 """
 
 import pandas as pd
-from pathlib import Path
 from datetime import datetime
+from paths import INPUT_DIR, OUTPUT_DIR, ensure_data_dirs
 
 # 기준일 및 조회 기간 (실제 운영시 동적 설정 가능)
 TODAY = datetime(2026, 7, 31)
@@ -14,12 +14,15 @@ START_DATE = TODAY - pd.Timedelta(days=6)
 
 def classify_groups():
     """고객군 분류 실행"""
-    workspace = Path.cwd()
+    ensure_data_dirs()
 
-    metrics = pd.read_csv(workspace / "customer_metrics.csv", dtype=str)
-    churn_scores = pd.read_csv(workspace / "churn_scores.csv", dtype=str)
-    merged = pd.read_csv(workspace / "merged_data.csv", dtype=str, parse_dates=["order_date_parsed"])
-    members = pd.read_csv(workspace / "members.csv", dtype=str)
+    metrics = pd.read_csv(OUTPUT_DIR / "customer_metrics.csv", dtype=str)
+    churn_scores = pd.read_csv(OUTPUT_DIR / "churn_scores.csv", dtype=str)
+    merged = pd.read_csv(OUTPUT_DIR / "merged_data.csv", dtype=str)
+    merged["order_date_parsed"] = pd.to_datetime(
+        merged["order_date_parsed"], errors="coerce"
+    )
+    members = pd.read_csv(INPUT_DIR / "members.csv", dtype=str)
 
     groups = []
 
@@ -74,12 +77,12 @@ def classify_groups():
         })
 
     df = pd.DataFrame(groups)
-    df.to_csv(workspace / "customer_groups.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(OUTPUT_DIR / "customer_groups.csv", index=False, encoding="utf-8-sig")
 
     # 이탈 위험 고객 목록
     churn_df = df[df["고객군"] == "이탈 위험 고객"].copy()
     churn_df = churn_df.sort_values(["이탈 등급", "최종 주문 후 경과일"], ascending=[True, False])
-    churn_df.to_csv(workspace / "churn_risk_customers.csv", index=False, encoding="utf-8-sig")
+    churn_df.to_csv(OUTPUT_DIR / "churn_risk_customers.csv", index=False, encoding="utf-8-sig")
 
     print("📊 고객군 분류 완료")
     print(f"  총 분석 대상: {len(df)}명")

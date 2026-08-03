@@ -3,7 +3,7 @@ validation-suite: 분석 결과의 정합성을 검증한다.
 """
 
 import pandas as pd
-from pathlib import Path
+from paths import INPUT_DIR, OUTPUT_DIR, ensure_data_dirs
 from datetime import datetime
 
 # 기준일 및 조회 기간
@@ -14,20 +14,20 @@ START_DATE = TODAY - pd.Timedelta(days=6)
 
 def run_validation():
     """최종 검증 실행"""
-    workspace = Path.cwd()
+    ensure_data_dirs()
 
     results = []
 
     # 데이터 로드
     try:
-        metrics = pd.read_csv(workspace / "customer_metrics.csv", dtype=str)
-        groups = pd.read_csv(workspace / "customer_groups.csv", dtype=str)
-        merged = pd.read_csv(workspace / "merged_data.csv", dtype=str, parse_dates=["order_date_parsed"])
-        members = pd.read_csv(workspace / "members.csv", dtype=str)
-        region = pd.read_csv(workspace / "region_analysis.csv", dtype=str)
-        industry = pd.read_csv(workspace / "industry_analysis.csv", dtype=str)
-        product = pd.read_csv(workspace / "product_analysis.csv", dtype=str)
-        orders = pd.read_csv(workspace / "orders.csv", dtype=str)
+        metrics = pd.read_csv(OUTPUT_DIR / "customer_metrics.csv", dtype=str)
+        groups = pd.read_csv(OUTPUT_DIR / "customer_groups.csv", dtype=str)
+        merged = pd.read_csv(OUTPUT_DIR / "merged_data.csv", dtype=str, parse_dates=["order_date_parsed"])
+        members = pd.read_csv(INPUT_DIR / "members.csv", dtype=str)
+        region = pd.read_csv(OUTPUT_DIR / "region_analysis.csv", dtype=str)
+        industry = pd.read_csv(OUTPUT_DIR / "industry_analysis.csv", dtype=str)
+        product = pd.read_csv(OUTPUT_DIR / "product_analysis.csv", dtype=str)
+        orders = pd.read_csv(INPUT_DIR / "orders.csv", dtype=str)
     except Exception as e:
         print(f"[ERROR] 데이터 로딩 실패: {e}")
         return
@@ -135,7 +135,7 @@ def run_validation():
 
     # 저장
     result_df = pd.DataFrame(results)
-    result_df.to_csv(workspace / "validation_final.csv", index=False, encoding="utf-8-sig")
+    result_df.to_csv(OUTPUT_DIR / "validation_final.csv", index=False, encoding="utf-8-sig")
 
     print("📊 최종 검증 완료")
     all_pass = all(r["상태"] == "통과" for _, r in result_df.iterrows())

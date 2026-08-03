@@ -3,8 +3,8 @@ metrics-calculator: 고객별 5대 이용 지표를 계산한다.
 """
 
 import pandas as pd
-from pathlib import Path
 from datetime import datetime
+from paths import INPUT_DIR, OUTPUT_DIR, ensure_data_dirs
 
 # 기준일 (조회 종료일) — 실제 운영시 현재 날짜로 설정 가능
 TODAY = datetime(2026, 7, 31)
@@ -13,10 +13,13 @@ END_DATE = TODAY
 
 def calc_metrics():
     """고객별 이용 지표 계산"""
-    workspace = Path.cwd()
+    ensure_data_dirs()
 
-    merged = pd.read_csv(workspace / "merged_data.csv", dtype=str, parse_dates=["order_date_parsed"])
-    members = pd.read_csv(workspace / "members.csv", dtype=str)
+    merged = pd.read_csv(OUTPUT_DIR / "merged_data.csv", dtype=str)
+    merged["order_date_parsed"] = pd.to_datetime(
+        merged["order_date_parsed"], errors="coerce"
+    )
+    members = pd.read_csv(INPUT_DIR / "members.csv", dtype=str)
 
     metrics = []
 
@@ -74,7 +77,7 @@ def calc_metrics():
               f"평균주기={r['평균 이용 주기']}, 경과일={r['최종 주문 후 경과일']}일, "
               f"누적금액={r['누적 이용 금액']}, 회원={r['회원 여부']}")
 
-    df.to_csv(workspace / "customer_metrics.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(OUTPUT_DIR / "customer_metrics.csv", index=False, encoding="utf-8-sig")
     print(f"  저장: customer_metrics.csv")
 
     return df, analysis_customers, analysis_order_count

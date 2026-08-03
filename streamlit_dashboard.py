@@ -9,8 +9,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
+
+DATA_OUTPUT_DIR = Path(__file__).resolve().parent / "data" / "output"
 
 # ==================== 페이지 설정 ====================
 st.set_page_config(
@@ -25,7 +28,7 @@ st.set_page_config(
 def load_customer_metrics():
     """고객별 이용 지표 로드"""
     try:
-        df = pd.read_csv('customer_metrics.csv')
+        df = pd.read_csv(DATA_OUTPUT_DIR / 'customer_metrics.csv')
         df['누적 이용 금액(원)'] = df['누적 이용 금액'].astype(str).str.replace(',', '').str.replace('원', '').astype(float)
         return df
     except:
@@ -35,63 +38,63 @@ def load_customer_metrics():
 def load_customer_groups():
     """고객군 분류 결과 로드"""
     try:
-        return pd.read_csv('customer_groups.csv')
+        return pd.read_csv(DATA_OUTPUT_DIR / 'customer_groups.csv')
     except:
         return pd.DataFrame(columns=['customer_id', '고객군', '이탈 상태', '이탈 등급', '판단 근거', '평균 이용 주기', '최종 주문 후 경과일'])
 
 @st.cache_data(ttl=60)
 def load_validation_results():
     try:
-        return pd.read_csv('validation_results.csv')
+        return pd.read_csv(DATA_OUTPUT_DIR / 'validation_results.csv')
     except:
         return pd.DataFrame()
 
 @st.cache_data(ttl=60)
 def load_invalid_records():
     try:
-        return pd.read_csv('invalid_records.csv')
+        return pd.read_csv(DATA_OUTPUT_DIR / 'invalid_records.csv')
     except:
         return pd.DataFrame()
 
 @st.cache_data(ttl=60)
 def load_churn_risk():
     try:
-        return pd.read_csv('churn_risk_customers.csv')
+        return pd.read_csv(DATA_OUTPUT_DIR / 'churn_risk_customers.csv')
     except:
         return pd.DataFrame()
 
 @st.cache_data(ttl=60)
 def load_region_analysis():
     try:
-        return pd.read_csv('region_analysis.csv')
+        return pd.read_csv(DATA_OUTPUT_DIR / 'region_analysis.csv')
     except:
         return pd.DataFrame()
 
 @st.cache_data(ttl=60)
 def load_industry_analysis():
     try:
-        return pd.read_csv('industry_analysis.csv')
+        return pd.read_csv(DATA_OUTPUT_DIR / 'industry_analysis.csv')
     except:
         return pd.DataFrame()
 
 @st.cache_data(ttl=60)
 def load_product_analysis():
     try:
-        return pd.read_csv('product_analysis.csv')
+        return pd.read_csv(DATA_OUTPUT_DIR / 'product_analysis.csv')
     except:
         return pd.DataFrame()
 
 @st.cache_data(ttl=60)
 def load_validation_final():
     try:
-        return pd.read_csv('validation_final.csv')
+        return pd.read_csv(DATA_OUTPUT_DIR / 'validation_final.csv')
     except:
         return pd.DataFrame()
 
 @st.cache_data(ttl=60)
 def load_ai_summary():
     try:
-        with open('ai_summary.txt', 'r', encoding='utf-8') as f:
+        with open(DATA_OUTPUT_DIR / 'ai_summary.txt', 'r', encoding='utf-8') as f:
             lines = f.readlines()
         return [line.strip() for line in lines if line.strip()]
     except:
@@ -100,7 +103,7 @@ def load_ai_summary():
 @st.cache_data(ttl=60)
 def load_analysis_conditions():
     try:
-        with open('customer_analysis_result.md', 'r', encoding='utf-8') as f:
+        with open(DATA_OUTPUT_DIR / 'customer_analysis_result.md', 'r', encoding='utf-8') as f:
             content = f.read()
         conditions = {}
         in_section1 = False

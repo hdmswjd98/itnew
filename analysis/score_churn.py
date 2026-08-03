@@ -3,13 +3,13 @@ churn-risk-scorer: 이탈 위험 비율과 등급을 산정한다.
 """
 
 import pandas as pd
-from pathlib import Path
+from paths import OUTPUT_DIR, ensure_data_dirs
 
 
 def score_churn():
     """이탈 위험 점수 산정"""
-    workspace = Path.cwd()
-    metrics = pd.read_csv(workspace / "customer_metrics.csv", dtype=str)
+    ensure_data_dirs()
+    metrics = pd.read_csv(OUTPUT_DIR / "customer_metrics.csv", dtype=str)
 
     scores = []
     for _, row in metrics.iterrows():
@@ -46,7 +46,7 @@ def score_churn():
         })
 
     df = pd.DataFrame(scores)
-    df.to_csv(workspace / "churn_scores.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(OUTPUT_DIR / "churn_scores.csv", index=False, encoding="utf-8-sig")
 
     print("📊 이탈 위험 점수 산정 완료")
     for _, r in df.iterrows():

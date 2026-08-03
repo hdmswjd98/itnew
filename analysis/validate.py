@@ -3,18 +3,18 @@ data-validator: 회원·주문·배송 CSV 의 필수 컬럼, 결측값, 중복,
 """
 
 import pandas as pd
-from pathlib import Path
+from paths import INPUT_DIR, OUTPUT_DIR, ensure_data_dirs
 
 
 def run_validation():
     """데이터 검증 실행. WORKSPACE 는 호출 측에서 설정됨."""
-    workspace = Path.cwd()
+    ensure_data_dirs()
 
     validation_results = []
     invalid_records = []
 
     # ── members.csv 검증 ──────────────────────────────
-    members_path = workspace / "members.csv"
+    members_path = INPUT_DIR / "members.csv"
     if not members_path.exists():
         print(f"[ERROR] {members_path} 파일을 찾을 수 없습니다.")
         return
@@ -34,7 +34,7 @@ def run_validation():
         validation_results.append({"항목": "members.csv customer_id 중복", "상태": "통과", "내용": "중복 없음"})
 
     # ── orders.csv 검증 ──────────────────────────────
-    orders_path = workspace / "orders.csv"
+    orders_path = INPUT_DIR / "orders.csv"
     if not orders_path.exists():
         print(f"[ERROR] {orders_path} 파일을 찾을 수 없습니다.")
         return
@@ -94,7 +94,7 @@ def run_validation():
         validation_results.append({"항목": "orders.csv 주문 금액 오류", "상태": "통과", "내용": "모든 금액 정상"})
 
     # ── deliveries.csv 검증 ──────────────────────────
-    deliveries_path = workspace / "deliveries.csv"
+    deliveries_path = INPUT_DIR / "deliveries.csv"
     if not deliveries_path.exists():
         print(f"[ERROR] {deliveries_path} 파일을 찾을 수 없습니다.")
         return
@@ -117,7 +117,7 @@ def run_validation():
         validation_results.append({"항목": "deliveries.csv 연결 오류", "상태": "통과", "내용": "모든 배송 데이터 연결 가능"})
 
     # ── invalid_orders.csv 검증 ──────────────────────
-    invalid_orders_path = workspace / "invalid_orders.csv"
+    invalid_orders_path = INPUT_DIR / "invalid_orders.csv"
     if invalid_orders_path.exists():
         invalid_orders = pd.read_csv(invalid_orders_path, dtype=str)
         for _, r in invalid_orders.iterrows():
@@ -148,10 +148,10 @@ def run_validation():
 
     # 저장
     val_df = pd.DataFrame(validation_results)
-    val_df.to_csv(workspace / "validation_results.csv", index=False, encoding="utf-8-sig")
+    val_df.to_csv(OUTPUT_DIR / "validation_results.csv", index=False, encoding="utf-8-sig")
 
     inv_df = pd.DataFrame(invalid_records)
-    inv_df.to_csv(workspace / "invalid_records.csv", index=False, encoding="utf-8-sig")
+    inv_df.to_csv(OUTPUT_DIR / "invalid_records.csv", index=False, encoding="utf-8-sig")
 
     print("📊 데이터 검증 완료")
     print(f"  검증 항목: {len(val_df)}건")

@@ -3,17 +3,17 @@ data-merger: 고객 ID 와 주문 ID 기준으로 회원·주문·배송 데이�
 """
 
 import pandas as pd
-from pathlib import Path
+from paths import INPUT_DIR, OUTPUT_DIR, ensure_data_dirs
 
 
 def merge_data():
     """데이터 병합 실행"""
-    workspace = Path.cwd()
+    ensure_data_dirs()
 
     # 데이터 로드
-    members = pd.read_csv(workspace / "members.csv", dtype=str)
-    valid_orders_raw = pd.read_csv(workspace / "valid_orders_raw.csv", dtype=str)
-    deliveries = pd.read_csv(workspace / "deliveries.csv", dtype=str)
+    members = pd.read_csv(INPUT_DIR / "members.csv", dtype=str)
+    valid_orders_raw = pd.read_csv(OUTPUT_DIR / "valid_orders_raw.csv", dtype=str)
+    deliveries = pd.read_csv(INPUT_DIR / "deliveries.csv", dtype=str)
 
     # 숫자 컬럼 변환
     valid_orders_raw["order_amount_num"] = pd.to_numeric(valid_orders_raw["order_amount_num"], errors="coerce")
@@ -38,7 +38,7 @@ def merge_data():
     merged = merged.sort_values(["customer_id", "order_date_parsed"]).reset_index(drop=True)
 
     # 저장
-    merged.to_csv(workspace / "merged_data.csv", index=False, encoding="utf-8-sig")
+    merged.to_csv(OUTPUT_DIR / "merged_data.csv", index=False, encoding="utf-8-sig")
     print(f"✅ 데이터 연결 완료: merged_data.csv")
     print(f"  총 행 수: {len(merged)}")
     print(f"  고유 customer_id: {merged['customer_id'].nunique()}")

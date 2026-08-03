@@ -42,6 +42,29 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### 데이터 폴더
+
+원본 CSV는 `data/input/`에 넣고, 파이프라인이 생성하는 분석 결과는
+`data/output/`에 저장됩니다.
+
+```text
+data/
+├── input/
+│   ├── members.csv
+│   ├── orders.csv
+│   ├── deliveries.csv
+│   └── invalid_orders.csv
+└── output/
+    ├── customer_metrics.csv
+    ├── customer_groups.csv
+    └── ...
+```
+
+```bash
+python3 analysis/run_pipeline.py
+python3 -m streamlit run streamlit_dashboard.py
+```
+
 ## 📊 3대 대시보드 개요
 
 ### 1. 고객분석 대시보드 (`customer-analysis` 브랜치)

@@ -3,7 +3,7 @@ pattern-analyzer: 지역·업종·품목별 특성과 AI 요약문을 생성한�
 """
 
 import pandas as pd
-from pathlib import Path
+from paths import OUTPUT_DIR, ensure_data_dirs
 from datetime import datetime
 
 # 기준일 및 조회 기간
@@ -14,12 +14,12 @@ START_DATE = TODAY - pd.Timedelta(days=6)
 
 def analyze_patterns():
     """패턴 분석 실행"""
-    workspace = Path.cwd()
+    ensure_data_dirs()
 
-    groups = pd.read_csv(workspace / "customer_groups.csv", dtype=str)
-    churn_df = pd.read_csv(workspace / "churn_risk_customers.csv", dtype=str) if (workspace / "churn_risk_customers.csv").exists() else pd.DataFrame()
-    merged = pd.read_csv(workspace / "merged_data.csv", dtype=str, parse_dates=["order_date_parsed"])
-    metrics = pd.read_csv(workspace / "customer_metrics.csv", dtype=str)
+    groups = pd.read_csv(OUTPUT_DIR / "customer_groups.csv", dtype=str)
+    churn_df = pd.read_csv(OUTPUT_DIR / "churn_risk_customers.csv", dtype=str) if (OUTPUT_DIR / "churn_risk_customers.csv").exists() else pd.DataFrame()
+    merged = pd.read_csv(OUTPUT_DIR / "merged_data.csv", dtype=str, parse_dates=["order_date_parsed"])
+    metrics = pd.read_csv(OUTPUT_DIR / "customer_metrics.csv", dtype=str)
 
     analysis_customers = groups["customer_id"].tolist()
 
@@ -33,17 +33,17 @@ def analyze_patterns():
     group_counts = groups["고객군"].value_counts().reset_index()
     group_counts.columns = ["고객군", "고객 수"]
     group_counts["비율"] = (group_counts["고객 수"] / group_counts["고객 수"].sum() * 100).round(1)
-    group_counts.to_csv(workspace / "group_counts.csv", index=False, encoding="utf-8-sig")
+    group_counts.to_csv(OUTPUT_DIR / "group_counts.csv", index=False, encoding="utf-8-sig")
 
     # 2. 지역 특성 (고객당 1행 기준)
     region_by_group = analysis_data_dedup.groupby(["고객군", "region"]).size().reset_index(name="고객 수")
     region_by_group["비율"] = region_by_group.groupby("고객군")["고객 수"].transform(lambda x: (x / x.sum() * 100).round(1))
-    region_by_group.to_csv(workspace / "region_analysis.csv", index=False, encoding="utf-8-sig")
+    region_by_group.to_csv(OUTPUT_DIR / "region_analysis.csv", index=False, encoding="utf-8-sig")
 
     # 3. 업종 특성 (고객당 1행 기준)
     industry_by_group = analysis_data_dedup.groupby(["고객군", "industry"]).size().reset_index(name="고객 수")
     industry_by_group["비율"] = industry_by_group.groupby("고객군")["고객 수"].transform(lambda x: (x / x.sum() * 100).round(1))
-    industry_by_group.to_csv(workspace / "industry_analysis.csv", index=False, encoding="utf-8-sig")
+    industry_by_group.to_csv(OUTPUT_DIR / "industry_analysis.csv", index=False, encoding="utf-8-sig")
 
     # 4. 품목 특성
     analysis_data["order_amount_num"] = pd.to_numeric(analysis_data["order_amount_num"], errors="coerce")
@@ -53,7 +53,7 @@ def analyze_patterns():
         주문_금액=("order_amount_num", "sum")
     ).reset_index()
     product_by_group["비율"] = product_by_group.groupby("고객군")["주문_건수"].transform(lambda x: (x / x.sum() * 100).round(1))
-    product_by_group.to_csv(workspace / "product_analysis.csv", index=False, encoding="utf-8-sig")
+    product_by_group.to_csv(OUTPUT_DIR / "product_analysis.csv", index=False, encoding="utf-8-sig")
 
     # 5. AI 요약문 생성
     new_c = (groups["고객군"] == "신규 고객").sum()
@@ -80,7 +80,7 @@ def analyze_patterns():
     lines.append(f"재이용 고객은 {ret_ids}로, 조회 기간 내 재주문을 통해 활발한 이용 패턴을 보였다.")
     lines.append("전체적으로 신규 유입보다 기존 고객의 재방문 유도가 중요한 시점이며, 이탈 위험 고객에 대한 선제적 관리가 필요하다.")
 
-    with open(workspace / "ai_summary.txt", "w", encoding="utf-8") as f:
+    with open(OUTPUT_DIR / "ai_summary.txt", "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
     print("📊 패턴 분석 완료")

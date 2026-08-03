@@ -3,7 +3,7 @@ dashboard-formatter: 검증된 결과를 spec.md 의 11개 섹션에 맞춰 Mark
 """
 
 import pandas as pd
-from pathlib import Path
+from paths import INPUT_DIR, OUTPUT_DIR, ensure_data_dirs
 from datetime import datetime
 
 # 기준일 및 조회 기간
@@ -21,33 +21,33 @@ def fmt_money(v):
 
 def build_report():
     """최종 Markdown 보고서 생성"""
-    workspace = Path.cwd()
+    ensure_data_dirs()
 
     # 데이터 로드
-    members = pd.read_csv(workspace / "members.csv", dtype=str)
-    orders = pd.read_csv(workspace / "orders.csv", dtype=str)
-    deliveries = pd.read_csv(workspace / "deliveries.csv", dtype=str)
-    invalid_orders = pd.read_csv(workspace / "invalid_orders.csv", dtype=str)
+    members = pd.read_csv(INPUT_DIR / "members.csv", dtype=str)
+    orders = pd.read_csv(INPUT_DIR / "orders.csv", dtype=str)
+    deliveries = pd.read_csv(INPUT_DIR / "deliveries.csv", dtype=str)
+    invalid_orders = pd.read_csv(INPUT_DIR / "invalid_orders.csv", dtype=str)
 
     try:
-        validation_results = pd.read_csv(workspace / "validation_results.csv", dtype=str)
+        validation_results = pd.read_csv(OUTPUT_DIR / "validation_results.csv", dtype=str)
     except:
         validation_results = pd.DataFrame(columns=["항목", "상태", "내용"])
 
-    group_counts = pd.read_csv(workspace / "group_counts.csv", dtype=str)
-    metrics = pd.read_csv(workspace / "customer_metrics.csv", dtype=str)
-    groups = pd.read_csv(workspace / "customer_groups.csv", dtype=str)
-    churn_df = pd.read_csv(workspace / "churn_risk_customers.csv", dtype=str)
-    region = pd.read_csv(workspace / "region_analysis.csv", dtype=str)
-    industry = pd.read_csv(workspace / "industry_analysis.csv", dtype=str)
-    product = pd.read_csv(workspace / "product_analysis.csv", dtype=str)
-    validation_final = pd.read_csv(workspace / "validation_final.csv", dtype=str)
+    group_counts = pd.read_csv(OUTPUT_DIR / "group_counts.csv", dtype=str)
+    metrics = pd.read_csv(OUTPUT_DIR / "customer_metrics.csv", dtype=str)
+    groups = pd.read_csv(OUTPUT_DIR / "customer_groups.csv", dtype=str)
+    churn_df = pd.read_csv(OUTPUT_DIR / "churn_risk_customers.csv", dtype=str)
+    region = pd.read_csv(OUTPUT_DIR / "region_analysis.csv", dtype=str)
+    industry = pd.read_csv(OUTPUT_DIR / "industry_analysis.csv", dtype=str)
+    product = pd.read_csv(OUTPUT_DIR / "product_analysis.csv", dtype=str)
+    validation_final = pd.read_csv(OUTPUT_DIR / "validation_final.csv", dtype=str)
 
-    with open(workspace / "ai_summary.txt", "r", encoding="utf-8") as f:
+    with open(OUTPUT_DIR / "ai_summary.txt", "r", encoding="utf-8") as f:
         ai_summary = f.read()
 
     analysis_customers = groups["customer_id"].tolist()
-    merged = pd.read_csv(workspace / "merged_data.csv", dtype=str)
+    merged = pd.read_csv(OUTPUT_DIR / "merged_data.csv", dtype=str)
     analysis_orders_count = len(merged[merged["customer_id"].isin(analysis_customers)])
 
     md = []
@@ -189,7 +189,7 @@ def build_report():
     md.append("")
 
     # 저장
-    output_path = workspace / "customer_analysis_result.md"
+    output_path = OUTPUT_DIR / "customer_analysis_result.md"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("\n".join(md))
 

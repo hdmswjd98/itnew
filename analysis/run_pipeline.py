@@ -29,6 +29,7 @@ from classify import classify_groups as step5_classify
 from analyze_patterns import analyze_patterns as step6_pattern
 from run_validation import run_validation as step7_validate
 from build_report import build_report as step8_report
+from paths import INPUT_DIR, OUTPUT_DIR, ensure_data_dirs
 
 # 작업 디렉토리 (스크립트가 있는 디렉토리 = analysis/)
 WORKSPACE = Path(__file__).parent
@@ -36,10 +37,12 @@ WORKSPACE = Path(__file__).parent
 
 def run_pipeline():
     """파이프라인 전체 실행"""
+    ensure_data_dirs()
     print("=" * 60)
     print("🏢 잇뉴 고객 분석 파이프라인")
     print("=" * 60)
-    print(f"작업 디렉토리: {WORKSPACE.absolute()}")
+    print(f"입력 데이터: {INPUT_DIR}")
+    print(f"출력 데이터: {OUTPUT_DIR}")
     print(f"실행 시각: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
 
@@ -71,7 +74,7 @@ def run_pipeline():
     print(f"\n{'='*60}")
     print("🎉 파이프라인 전체 완료!")
     print(f"{'='*60}")
-    print("\n생성된 산출물:")
+    print(f"\n생성된 산출물 ({OUTPUT_DIR}):")
     print("  - validation_results.csv     (데이터 검증 결과)")
     print("  - invalid_records.csv        (제외 데이터)")
     print("  - valid_orders_raw.csv       (유효 주문 데이터)  ← 2단계 로드에서 생성")

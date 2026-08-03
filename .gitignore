@@ -43,9 +43,6 @@ invalid_records.csv
 valid_orders.csv
 merged_data.csv
 
-# Timely 스킬 디렉토리 (pip install 또는 별도 clone 으로 관리)
-.pi/
-
 # IDE
 .vscode/
 .idea/

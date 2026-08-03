@@ -12,6 +12,7 @@ import numpy as np
 import os
 from datetime import datetime
 from pathlib import Path
+import plotly.graph_objects as go
 
 # ==================== 페이지 설정 ====================
 st.set_page_config(

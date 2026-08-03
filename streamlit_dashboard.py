@@ -218,9 +218,6 @@ with col_left:
         hoverlabel=dict(bgcolor='#1a1d2e', font_color='#e4e6f0', font_size=13)
     )])
     fig_doughnut.update_traces(
-        hoverfontsize=14,
-        hoverbordercolor='#6c5ce7',
-        hoverborderwidth=2,
         marker_line_width=2,
         marker_line_color='#0f1117'
     )

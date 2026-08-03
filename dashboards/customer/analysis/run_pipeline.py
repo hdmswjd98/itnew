@@ -30,6 +30,7 @@ from analyze_patterns import analyze_patterns as step6_pattern
 from run_validation import run_validation as step7_validate
 from build_report import build_report as step8_report
 from paths import INPUT_DIR, OUTPUT_DIR, ensure_data_dirs
+from import_real_data import import_real_data
 
 # 작업 디렉토리 (스크립트가 있는 디렉토리 = analysis/)
 WORKSPACE = Path(__file__).parent
@@ -48,15 +49,16 @@ def run_pipeline():
 
     # 파이프라인 각 단계 실행
     steps = [
-        ("1. 데이터 검증", step1_validate),
-        ("2. 데이터 로드", step2_load),
-        ("3. 데이터 병합", step3_merge),
-        ("4. 고객별 지표 계산", step4_metrics),
-        ("5. 이탈 위험 점수 산정", step4_churn),
-        ("6. 고객군 분류", step5_classify),
-        ("7. 패턴 분석", step6_pattern),
-        ("8. 최종 검증", step7_validate),
-        ("9. 보고서 생성", step8_report),
+        ("1. 실제 Excel 변환", import_real_data),
+        ("2. 데이터 검증", step1_validate),
+        ("3. 데이터 로드", step2_load),
+        ("4. 데이터 병합", step3_merge),
+        ("5. 고객별 지표 계산", step4_metrics),
+        ("6. 이탈 위험 점수 산정", step4_churn),
+        ("7. 고객군 분류", step5_classify),
+        ("8. 패턴 분석", step6_pattern),
+        ("9. 최종 검증", step7_validate),
+        ("10. 보고서 생성", step8_report),
     ]
 
     for step_name, step_func in steps:

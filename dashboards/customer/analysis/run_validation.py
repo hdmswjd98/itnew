@@ -56,17 +56,64 @@ def run_validation():
         "원인": "-" if ok else f"충돌 고객: {list(conflict.index)}"
     })
 
-    # 3. 이탈 위험 판단 근거
-    churn_df = groups[groups["고객군"] == "이탈 위험 고객"]
-    no_reason = churn_df[churn_df["판단 근거"].isna() | (churn_df["판단 근거"] == "")]
-    ok = len(no_reason) == 0
+    # 3. 이탈 위험 판단 근거 및 필수 컬럼
+    churn_columns = {
+        "이탈 분석 대상 여부", "이탈 위험 등급", "판단 근거", "전체 주문 횟수",
+        "최근 주문일", "평균 이용 주기", "최종 주문 후 경과일", "평균 주기 대비 경과 비율",
+    }
+    missing_columns = churn_columns - set(groups.columns)
+    no_reason = groups[groups["판단 근거"].isna() | (groups["판단 근거"] == "")] if not missing_columns else groups
+    ok = not missing_columns and len(no_reason) == 0
+    reason = "-"
+    if missing_columns:
+        reason = f"필수 컬럼 누락: {sorted(missing_columns)}"
+    elif len(no_reason):
+        reason = f"근거 누락: {list(no_reason['customer_id'])}"
     results.append({
-        "항목": "이탈 위험 고객 판단 근거 포함",
+        "항목": "이탈 분석 결과 필수 항목 및 판단 근거",
         "상태": "통과" if ok else "실패",
-        "원인": "-" if ok else f"근거 누락: {list(no_reason['customer_id'])}"
+        "원인": reason,
     })
 
-    # 4. 인원 합계 일치
+    # 4. 주문 횟수별 이탈 분석 대상·등급 기준
+    order_counts = pd.to_numeric(groups["전체 주문 횟수"], errors="coerce")
+    invalid_one = groups[(order_counts == 1) & (
+        (groups["이탈 분석 대상 여부"] != "아니오") | (groups["이탈 위험 등급"] != "판정 제외")
+    )]
+    invalid_two = groups[(order_counts == 2) & (
+        (groups["이탈 분석 대상 여부"] != "아니오") | (groups["이탈 위험 등급"] != "판정 보류")
+    )]
+    cycle_days = pd.to_numeric(
+        groups["평균 이용 주기"].astype(str).str.replace("일", "", regex=False),
+        errors="coerce",
+    )
+    cycle_available = cycle_days.gt(0)
+    invalid_three = groups[(order_counts >= 3) & cycle_available & (
+        (groups["이탈 분석 대상 여부"] != "예") |
+        (~groups["이탈 위험 등급"].isin(["정상", "주의", "위험"]))
+    )]
+    invalid_cycle = groups[(order_counts >= 3) & ~cycle_available & (
+        (groups["이탈 분석 대상 여부"] != "아니오") | (groups["이탈 위험 등급"] != "판정 보류")
+    )]
+    invalid_rules = pd.concat([invalid_one, invalid_two, invalid_three, invalid_cycle]).drop_duplicates()
+    ok = len(invalid_rules) == 0
+    results.append({
+        "항목": "주문 횟수별 이탈 분석 기준 일치",
+        "상태": "통과" if ok else "실패",
+        "원인": "-" if ok else f"기준 불일치 고객: {list(invalid_rules['customer_id'])}",
+    })
+
+    # 5. 분석 대상은 정상·주의·위험 등급 합계와 일치해야 한다.
+    eligible = groups[groups["이탈 분석 대상 여부"] == "예"]
+    graded = groups[groups["이탈 위험 등급"].isin(["정상", "주의", "위험"])]
+    ok = set(eligible["customer_id"]) == set(graded["customer_id"])
+    results.append({
+        "항목": "이탈 분석 대상과 등급 합계 일치",
+        "상태": "통과" if ok else "실패",
+        "원인": "-" if ok else f"분석대상:{len(eligible)} vs 등급합계:{len(graded)}",
+    })
+
+    # 6. 인원 합계 일치
     group_total = groups["고객군"].value_counts().sum()
     ok = group_total == len(analysis_customers)
     results.append({
@@ -103,15 +150,15 @@ def run_validation():
         "원인": "-" if ok else f"품목합계:{product_total} vs 주문건수:{analysis_order_count}"
     })
 
-    # 8. 원본 데이터 금액 일치
-    merged_amount = pd.to_numeric(merged["order_amount_num"], errors="coerce").sum()
-    orders["order_amount_num"] = pd.to_numeric(orders["order_amount"], errors="coerce")
-    valid_orders_amount = orders.dropna(subset=["order_amount_num"])["order_amount_num"].sum()
-    ok = abs(merged_amount - valid_orders_amount) < 1
+    # 10. 원본 배송 수량 일치
+    merged_quantity = pd.to_numeric(merged["order_quantity_num"], errors="coerce").sum()
+    orders["order_quantity_num"] = pd.to_numeric(orders["order_quantity"], errors="coerce")
+    valid_orders_quantity = orders.dropna(subset=["order_quantity_num"])["order_quantity_num"].sum()
+    ok = abs(merged_quantity - valid_orders_quantity) < 1
     results.append({
-        "항목": "누적 이용 금액 일치",
+        "항목": "누적 배송 수량 일치",
         "상태": "통과" if ok else "실패",
-        "원인": "-" if ok else f"merged:{merged_amount:,.0f} vs orders:{valid_orders_amount:,.0f}"
+        "원인": "-" if ok else f"merged:{merged_quantity:,.0f} vs orders:{valid_orders_quantity:,.0f}"
     })
 
     # 9. 중복 order_id 처리

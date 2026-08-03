@@ -22,6 +22,8 @@ model: claude-haiku-4-5
 - customer_metrics.csv, members.csv, valid_orders.csv 를 입력으로 전달
 - 분석 기준일, 조회 시작일, 조회 종료일을 전달
 - 출력: customer_groups.csv, churn_risk_customers.csv
+- 전체 주문 3회 이상만 이탈 위험 분석 대상으로 삼고 1회는 판정 제외, 2회는 판정 보류
+- 이탈 위험률은 위험 등급 고객 수 ÷ 이탈 분석 대상 고객 수 × 100으로 계산
 
 ### 4단계: 특성 분석 (customer-characteristics 호출)
 - customer_groups.csv, customer_metrics.csv, valid_orders.csv, members.csv 를 입력으로 전달
@@ -30,7 +32,7 @@ model: claude-haiku-4-5
 
 ### 5단계: 최종 검증 (validation-suite 스킬 사용)
 - 1~4단계 출력을 기반으로 최종 검증 수행
-- 검증 항목: 지표 누락, 분류 충돌, 이탈 위험 판단 근거, 인원 합계 일치, 수치 일치
+- 검증 항목: 지표 누락, 분류 충돌, 주문 횟수별 이탈 분석 기준, 이탈 위험 판단 근거, 분석 대상·등급 합계, 인원 합계, 수치 일치
 - 실패 시 해당 단계로 돌아가 재실행
 
 ### 6단계: 보고서 생성 (dashboard-formatter 스킬 사용)

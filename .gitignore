@@ -52,4 +52,13 @@ dashboards/customer/data/output/*
 .idea/
 *.swp
 *.swo
+
+# 개인 실행 메모
+/실행
+/실행.txt
+
+# 제공받은 실제 데이터 및 문서 (외부 공개 금지)
+/[얼른]제주대학교 부트캠프/
+/[[]*]/
+/\[*
 EOF

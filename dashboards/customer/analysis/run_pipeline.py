@@ -1,7 +1,7 @@
 """
 잇뉴 고객 분석 파이프라인 — 마스터 실행 스크립트
 팀원 노트북에서 다음 명령어로 전체 파이프라인을 실행:
-    python analysis/run_pipeline.py
+    python3 dashboards/customer/analysis/run_pipeline.py
 
 파이프라인 단계:
   1. 데이터 로드 및 검증 (data-validator)
@@ -91,7 +91,7 @@ def run_pipeline():
     print("  - validation_final.csv       (최종 검증 결과)")
     print("  - customer_analysis_result.md (최종 보고서)")
     print("\n대시보드 실행:")
-    print("  streamlit run streamlit_dashboard.py")
+    print("  python3 -m streamlit run app.py")
     print(f"  → http://localhost:8501")
 
 

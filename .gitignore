@@ -21,11 +21,11 @@ build/
 Thumbs.db
 
 # 입력 데이터 — 개인정보 보호를 위해 Git에서 제외
-data/input/*.csv
+dashboards/customer/data/input/*.csv
 
 # 빈 폴더 구조는 Git에 유지
-!data/input/.gitkeep
-!data/output/.gitkeep
+!dashboards/customer/data/input/.gitkeep
+!dashboards/customer/data/output/.gitkeep
 
 # 분석 결과 (실시간 재생성되므로 Git 에 불필요)
 customer_analysis_result.md
@@ -44,8 +44,8 @@ valid_orders.csv
 merged_data.csv
 valid_orders_raw.csv
 group_counts.csv
-data/output/*
-!data/output/.gitkeep
+dashboards/customer/data/output/*
+!dashboards/customer/data/output/.gitkeep
 
 # IDE
 .vscode/

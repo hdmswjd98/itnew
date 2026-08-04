@@ -1,275 +1,69 @@
-# 🏢 잇뉴 (ITNEW) — 통합 분석 플랫폼
+# 고객 주문·재주문 분석 Streamlit 대시보드
 
-AI 기반 **고객 분석**, **월간 리포트**, **품목 데이터 분석**을 하나의 리포지토리에서 관리하는 통합 프로젝트입니다.
-
-## 🗂️ 브랜치 구조
-
-| 브랜치 | 담당 | 설명 |
-|---|---|---|
-| `main` | — | 통합 가이드 + 프로젝트 개요 (이 파일) |
-| `customer-analysis` | 데이터분석팀 | **고객 분석 대시보드** — 고객군 분류, 이탈위험 스코어링, 특성 분석 |
-| `monthly-report` | 운영팀 | **월간 리포트 자동 생성** — 정기 리포트 템플릿 & 자동화 |
-| `product-analysis` | 상품기획팀 | **품목 자동분류 & 품목 데이터 분석** — 품목명 분류, 품목별 수요 분석 |
-
-## 🚀 빠른 시작
-
-### 대시보드별 클론 & 실행
-
-```bash
-# 1) 고객 분석 대시보드
-git clone -b customer-analysis https://github.com/hdmswjd98/itnew.git customer-analysis
-cd customer-analysis
-pip install -r requirements.txt
-# 데이터 준비 후:
-python3 -m streamlit run app.py
-# → http://localhost:8501
-
-# 2) 월간 리포트 (개발 중)
-git clone -b monthly-report https://github.com/hdmswjd98/itnew.git monthly-report
-cd monthly-report
-
-# 3) 품목 분석 (개발 중)
-git clone -b product-analysis https://github.com/hdmswjd98/itnew.git product-analysis
-cd product-analysis
-```
-
-### 공통 설정
-
-```bash
-# Python 가상환경 (선택)
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### 데이터 폴더
-
-고객분석 원본 CSV는 `dashboards/customer/data/input/`에 넣고, 파이프라인이
-생성하는 분석 결과는 `dashboards/customer/data/output/`에 저장됩니다.
+## 1. 파일 구성
 
 ```text
-dashboards/customer/data/
-├── input/
-│   ├── members.csv
-│   ├── orders.csv
-│   ├── deliveries.csv
-│   └── invalid_orders.csv
-└── output/
-    ├── customer_metrics.csv
-    ├── customer_groups.csv
-    └── ...
+order_customer_dashboard/
+├─ app.py
+├─ requirements.txt
+├─ README.md
+└─ data.xlsx             # 사용자가 직접 배치, 없어도 화면에서 업로드 가능
 ```
+
+## 2. 설치 및 실행
+
+가상환경을 활성화한 상태에서 다음 명령을 실행합니다.
 
 ```bash
-python3 dashboards/customer/analysis/run_pipeline.py
-python3 -m streamlit run app.py
-```
-
-## 📊 3대 대시보드 개요
-
-### 1. 고객분석 대시보드 (`customer-analysis` 브랜치)
-
-**고객군 분류 + 이탈위험 스코어링 + 특성 분석** 결과를 실시간 시각화
-
-| 기능 | 설명 |
-|---|---|
-| 고객군 분류 | 신규 / 재이용 / 이탈위험 / 일반 (우선순위 적용) |
-| 이탈위험 스코어링 | 정상/주의/위험/적용안함 (평균이용주기 vs 경과일) |
-| 특성 분석 | 지역·업종·품목별 군별 분포 + AI 요약 |
-| 검증 | 10개 항목 자동 검증 (데이터 정합성 확인) |
-
-**핵심 지표 (고객별 5대)**
-- 최근 주문일 · 주문 횟수 · 평균 이용 주기 · 최종 주문 후 경과일 · 누적 이용 금액
-
-**대시보드 섹션 (11개)**
-1. 조회 기간 및 분석 조건 → 2. 데이터 검증 결과 → 3. 고객군별 현황 → 4. 고객별 이용 지표 → 5. 고객군 분류 결과 → 6. 이탈 위험 고객 목록 → 7. 고객군별 지역 특성 → 8. 고객군별 업종 특성 → 9. 고객군별 품목 분석 → 10. AI 분석 요약 → 11. 분석 결과 검증 결과
-
-### 2. 월간 리포트 (`monthly-report` 브랜치)
-
-**정기 리포트 자동 생성** — 매월 분석 결과를 Markdown/PDF 리포트로 자동 작성
-
-| 기능 | 설명 |
-|---|---|
-| 리포트 템플릿 | 11개 섹션 자동 채움 |
-| PDF 변환 | Streamlit → PDF export |
-| 이메일 발송 | (향후) Gmail/슬랙 자동 전송 |
-| 히스토리 관리 | 월별 리포트 아카이빙 |
-
-### 3. 품목 분석 (`product-analysis` 브랜치)
-
-**품목명 자동 분류 + 품목별 수요 분석** 대시보드
-
-| 기능 | 설명 |
-|---|---|
-| 품목명 자동 분류 | NLP/규칙 기반 품목 카테고리 분류 |
-| 품목별 수요 분석 | 주문량·금액·추이 분석 |
-| 카테고리별 현황 | 품목명 → 대분류/중분류 매핑 |
-| 수요 예측 | (향후) 시계열 기반 수요 예측 |
-
-## 🔄 데이터 흐름
-
-```
-┌─────────────────────────────────────────────────────┐
-│                  공통 데이터 소스                      │
-│  members.csv · orders.csv · deliveries.csv           │
-│  (팀 내 공유 스토리지 / Supabase / S3)               │
-└──────┬──────────────┬──────────────┬───────────────┘
-       │              │              │
-       ▼              ▼              ▼
-┌──────────┐  ┌──────────┐  ┌──────────────┐
-│ 고객분석  │  │ 월간리포트│  │  품목 분석    │
-│ (pipeline│  │ (report  │  │  (product    │
-│  실행)   │  │  생성)   │  │   분석)      │
-└────┬─────┘  └────┬─────┘  └──────┬───────┘
-     │              │              │
-     ▼              ▼              ▼
-┌──────────┐  ┌──────────┐  ┌──────────────┐
-│ CSV 결과 │  │ MD/PDF   │  │  CSV/DB 결과  │
-│ 생성     │  │ 리포트   │  │  (품목 매칭)  │
-└────┬─────┘  └────┬─────┘  └──────┬───────┘
-     │              │              │
-     └──────────────┼──────────────┘
-                    ▼
-           ┌──────────────────┐
-           │  대시보드 렌더링  │
-           │  (Streamlit /    │
-           │   웹 UI)         │
-           └──────────────────┘
-```
-
-## 🛠️ 기술 스택
-
-| 계층 | 기술 |
-|---|---|
-| 대시보드 프레임워크 | [Streamlit](https://streamlit.io) (Python) |
-| 차트 라이브러리 | [Plotly](https://plotly.com/python/) (인터랙티브) |
-| 데이터 처리 | [Pandas](https://pandas.pydata.org/) |
-| 데이터 저장 | CSV (현재) → Supabase (향후) |
-| 배포 | Streamlit Cloud / Hugging Face Spaces / 로컬 |
-| 자동화 | Bash + Cron |
-| 리포트 생성 | pandas + markdown + (향후) weasyprint/pdfkit |
-
-## 🌐 배포 가이드
-
-### Streamlit Cloud (무료, 추천)
-
-1. https://streamlit.io/cloud 에서 GitHub 계정 연동
-2. `itnew` 리포지토리 선택 → 원하는 브랜치 선택
-3. 메인 파일: `app.py`
-4. "Deploy!" 클릭 → 약 2분 후 URL 생성
-
-### 로컬 / 사내 서버
-
-```bash
-git clone -b <브랜치명> https://github.com/hdmswjd98/itnew.git
-cd itnew
 pip install -r requirements.txt
-python3 -m streamlit run app.py
-# → http://localhost:8501
+streamlit run app.py
 ```
 
-### Supabase 연동 (향후 업그레이드)
+Excel 파일은 다음 두 방법 중 하나로 불러옵니다.
 
-CSV 대신 Supabase Storage/API 에서 데이터를 실시간 조회:
+1. `app.py`와 같은 폴더에 `data.xlsx`로 저장
+2. 앱 실행 후 왼쪽 사이드바에서 Excel 파일 업로드
 
-```python
-import supabase
-import os
+## 3. 필요한 Excel 열
 
-@st.cache_data(ttl=60)
-def load_customer_metrics():
-    client = supabase.create_client(
-        os.getenv("SUPABASE_URL"),
-        os.getenv("SUPABASE_KEY")
-    )
-    response = client.table('customer_metrics').select('*').execute()
-    return pd.DataFrame(response.data)
-```
+### 주문 시트
 
-## 📁 통합 프로젝트 구조
+- 배송일
+- 접수형태
+- 고객(사)명
+- 송화인
+- 배송물품 품목명
+- 수량
+- 주문 접수 시간
 
-```
-itnew/
-├── app.py                       # 통합 Streamlit 실행 파일
-├── streamlit_dashboard.py       # 기존 실행 명령 호환용
-├── dashboards/
-│   ├── customer/
-│   │   ├── page.py              # 고객분석 화면
-│   │   ├── analysis/             # 고객분석 파이프라인
-│   │   └── data/
-│   │       ├── input/            # 고객분석 원본 CSV
-│   │       └── output/           # 고객분석 산출물
-│   ├── monthly/
-│   │   └── page.py              # 월간리포트 화면
-│   └── product/
-│       └── page.py              # 품목 자동분류 및 분석 화면
-├── shared/
-│   ├── navigation.py            # 공통 사이드바
-│   └── theme.py                 # 라이트·다크 테마
-├── requirements.txt
-└── README.md
-```
+권장 시트명은 `주문_2026년1-6월`이지만, 필수 열이 존재하면 다른 시트명도 자동 인식합니다.
 
-## 🔐 보안 주의사항
+### 회원 시트
 
-- **`.env` 파일은 절대 Git 에 커밋하지 마세요** (`.gitignore` 에 포함)
-- **고객 개인정보(CSV)** 가 포함된 파일은 Private 리포지토리로 관리
-- Supabase API 키는 `.env` 에 저장, 프로덕션에서 **RLS 설정 필수**
-- Streamlit Cloud 배포 시 secrets 설정에서 환경변수 관리
-- 민감 데이터는 `data/` 폴더에 두고 `.gitignore` 로 제외 권장
+- 회원명(가명)
+- 회원유형
+- 가입일시
 
-## 📝 담당 브랜치 전환 방법
+권장 시트명은 `회원_전체누적`입니다. 회원 시트가 없어도 주문 분석은 실행되지만 회원 활성화율은 표시되지 않습니다.
 
-```bash
-# 전체 프로젝트 클론 (main)
-git clone https://github.com/hdmswjd98/itnew.git
-cd itnew
+## 4. 분석 기준
 
-# 고객분석 대시보드만 보기
-git checkout customer-analysis
+- **배송 행:** 주문 시트의 한 행. 실제 배송 처리 물량입니다.
+- **주문회차:** 동일 고객이 동일 주문 접수 시각에 입력한 행을 하나로 묶은 값입니다.
+- **재주문 고객률:** 활성 고객 중 분석 기준일까지 누적 주문회차가 2회 이상인 고객 비율입니다.
+- **재주문회차 비중:** 선택 기간 주문회차 중 고객의 두 번째 이후 주문 비중입니다.
+- **30/60/90일 재주문 전환율:** 해당 기간만큼 관찰 가능한 첫 주문 고객만 분모에 포함합니다.
+- **이탈위험:** 고객별 평소 주문주기와 현재 무주문 기간을 함께 비교합니다.
 
-# 월간 리포트만 보기
-git checkout monthly-report
+## 5. 화면 구성
 
-# 품목 분석만 보기
-git checkout product-analysis
+1. 경영 요약: 핵심 KPI, 월별 추이, 신규·재주문 고객, 고객 의존도
+2. 시간대·수요: 시간·요일 히트맵, 누적 접수 비중, 리드타임, 물량 상위일
+3. 재주문·코호트: 전환율, 코호트 유지율, 주문간격, 유형별 비교
+4. 고객·이탈위험: 고객 세그먼트, 경보 목록, 고객별 상세 이력
+5. 품목·운영: 접수형태, 묶음 크기, 품목·요청사항, 데이터 품질
+6. 분석 보고서: 자동 보고서와 분석 CSV ZIP 다운로드
 
-# 다시 통합 가이드로
-git checkout main
-```
+## 6. 중요한 데이터 한계
 
-## 🤝 팀 협업 가이드
-
-| 역할 | 브랜치 | 주요 작업 |
-|---|---|---|
-| 데이터 분석가 | `customer-analysis` | 파이프라인 개선, 지표 추가, 대시보드 UI 개선 |
-| 운영 담당자 | `monthly-report` | 리포트 템플릿 작성, 이메일 발송 설정 |
-| 상품 기획자 | `product-analysis` | 품목명 분류 규칙 정의, 수요 분석 지표 설계 |
-
-### 브랜치 작업 흐름
-
-```bash
-# 1. 최신 main 가져오기
-git checkout main
-git pull origin main
-
-# 2. 작업할 브랜치로 전환
-git checkout customer-analysis
-
-# 3. main 의 최신 내용을 브랜치에 반영 (필요시)
-git merge main
-
-# 4. 작업 & 커밋
-git add .
-git commit -m "feat: 신규 지표 추가"
-git push origin customer-analysis
-
-# 5. main 에 반영 (필요시 PR 생성)
-git checkout main
-git merge customer-analysis
-git push origin main
-```
-
-## 📄 라이선스
-
-MIT License
+현재 예시 데이터처럼 주소가 비식별화되어 비어 있으면 지역 분석은 표시하지 않습니다. 가격·청구액 열이 없으면 매출 분석도 수행하지 않습니다. 표면상 동일한 행은 서로 다른 배송지일 수 있으므로 자동 중복 삭제하지 않습니다.

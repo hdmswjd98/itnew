@@ -26,14 +26,22 @@ Thumbs.db
 *.swp
 *.swo
 
-# Product Analysis
-output/
-artifacts/
-analysis/
-data/members.csv
-data/orders.csv
-data/deliveries.csv
-data/invalid_orders.csv
+# 실행 산출물
+/output/
+/artifacts/
+/references/
+/analysis/
+/data/input/*
+/data/output/*
+!/data/input/.gitkeep
+!/data/output/.gitkeep
+!/data/sample/
+!/data/sample/**
+/data/sample/__pycache__/
+
+# 로컬 월간보고서 DB
+dashboards/monthly/data/*.db
+dashboards/monthly/data/*.db-*
 
 # 입력 데이터 — 개인정보 보호를 위해 Git에서 제외
 dashboards/customer/data/input/*.csv

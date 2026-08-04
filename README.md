@@ -44,11 +44,11 @@ pip install -r requirements.txt
 
 ### 데이터 폴더
 
-고객분석 원본 CSV는 `dashboards/customer/data/input/`에 넣고, 파이프라인이
-생성하는 분석 결과는 `dashboards/customer/data/output/`에 저장됩니다.
+원본 CSV는 `data/input/`에 넣고, 파이프라인이 생성하는 분석 결과는
+`data/output/`에 저장됩니다. 두 폴더는 Git에 올라가지 않습니다.
 
 ```text
-dashboards/customer/data/
+data/
 ├── input/
 │   ├── members.csv
 │   ├── orders.csv
@@ -61,7 +61,7 @@ dashboards/customer/data/
 ```
 
 ```bash
-python3 dashboards/customer/analysis/run_pipeline.py
+python3 -m services.customer.pipeline
 python3 -m streamlit run app.py
 ```
 
@@ -191,20 +191,27 @@ def load_customer_metrics():
 ```
 itnew/
 ├── app.py                       # 통합 Streamlit 실행 파일
-├── streamlit_dashboard.py       # 기존 실행 명령 호환용
 ├── dashboards/
 │   ├── customer/
-│   │   ├── page.py              # 고객분석 화면
-│   │   ├── analysis/             # 고객분석 파이프라인
-│   │   └── data/
-│   │       ├── input/            # 고객분석 원본 CSV
-│   │       └── output/           # 고객분석 산출물
+│   │   ├── page.py              # 고객분석 화면 진입점
+│   │   └── sections.py          # 고객분석 화면 구성
 │   ├── monthly/
-│   │   └── page.py              # 월간리포트 화면
+│   │   ├── page.py              # 월간리포트 화면 진입점
+│   │   └── sections.py          # 월간리포트 화면 구성
 │   └── product/
-│       └── page.py              # 품목 자동분류 및 분석 화면
+│       ├── page.py              # 품목분석 화면 진입점
+│       └── sections.py          # 품목분석 화면 구성
+├── services/                    # 화면과 분리된 분석·저장 로직
+│   ├── customer/                # 고객분석 파이프라인
+│   ├── monthly/                 # 월간보고서 저장·내보내기
+│   └── product/                 # 품목 분류·수요 분석
+├── data/
+│   ├── input/                   # 공통 원본 데이터
+│   ├── output/                  # 공통 실행 산출물
+│   └── sample/                  # 공개 가능한 예제 데이터
 ├── shared/
 │   ├── navigation.py            # 공통 사이드바
+│   ├── paths.py                 # 공통 데이터 경로
 │   └── theme.py                 # 라이트·다크 테마
 ├── requirements.txt
 └── README.md

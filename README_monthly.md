@@ -1,120 +1,42 @@
-# 📅 월간 리포트 자동화 (Monthly Report Automation)
+# 월간 운영보고서
 
-매월 분석 결과를 Markdown/PDF 리포트로 자동 생성하는 도구입니다.
+잇뉴 통합 대시보드의 월간보고서 화면에서 운영 내용과 집계 지표를 결합해 보고서를 생성합니다.
 
-## 🚀 빠른 시작
+## 화면 흐름
 
-```bash
-git clone -b monthly-report https://github.com/hdmswjd98/itnew.git
-cd itnew
-pip install -r requirements.txt
-# 설정 후 실행
-python generate_report.py
-# → output/2026-07월간리포트.md
-```
+- 저장된 보고서가 있는 월: 완성된 보고서 조회 화면을 먼저 표시
+- 저장된 보고서가 없는 월: 신규 작성 화면 표시
+- 조회 화면에서 `수정하기`를 누르면 기존 값이 채워진 편집 화면 표시
+- 저장하면 조회 화면으로 복귀하고, 취소하면 변경 전 값으로 복원
 
-## 🎯 핵심 기능
+보고서는 월별 SQLite DB(`dashboards/monthly/data/monthly_reports.db`)에 저장됩니다. DB 파일은 개인정보와 운영정보 보호를 위해 Git에 포함하지 않습니다.
 
-| 기능 | 설명 | 상태 |
-|---|---|---|
-| **리포트 자동 생성** | 11개 대시보드 섹션을 Markdown 리포트로 자동 채움 | 🔄 개발 중 |
-| **PDF 변환** | Markdown → PDF 렌더링 (weasyprint/pdfkit) | ⏳ 예정 |
-| **이메일 발송** | 생성된 리포트를 이메일/슬랙으로 자동 전송 | ⏳ 예정 |
-| **히스토리 관리** | 월별 리포트 아카이빙 및 버전 관리 | ⏳ 예정 |
-| **주기적 실행** | 크론/스케줄러 기반 매월 자동 실행 | ⏳ 예정 |
-
-## 📁 프로젝트 구조 (예정)
-
-```
-itnew/
-├── generate_report.py          # 월간 리포트 생성 스크립트
-├── requirements.txt            # Python 패키지 의존성
-├── .gitignore
-├── README.md                   # 이 파일
-├── templates/                  # 리포트 템플릿
-│   └── monthly_report.md.j2    # Jinja2 템플릿
-├── output/                     # 생성된 리포트 (gitignore)
-│   └── 2026-07월간리포트.md
-└── scheduler/                  # 스케줄러 설정
-    ├── run_monthly_report.sh   # 월간 리포트 실행 스크립트
-    └── crontab.txt             # 크론 설정 예시
-```
-
-## 🛠️ 개발 계획
-
-### Phase 1: 리포트 템플릿 작성
-- [ ] Jinja2 템플릿 작성 (`templates/monthly_report.md.j2`)
-- [ ] 11개 섹션 템플릿 정의
-- [ ] 변수 바인딩 로직 구현
-
-### Phase 2: 리포트 생성 스크립트
-- [ ] CSV 데이터 읽기 (customer_metrics.csv 등)
-- [ ] 템플릿 렌더링 (Jinja2)
-- [ ] Markdown 파일 저장 (`output/YYYY-MM월간리포트.md`)
-- [ ] 실행 로그 기록
-
-### Phase 3: PDF 변환
-- [ ] weasyprint 설치 및 설정
-- [ ] Markdown → HTML 변환 (markdown 라이브러리)
-- [ ] HTML → PDF 변환 (weasyprint)
-- [ ] PDF 스타일링 (CSS)
-
-### Phase 4: 이메일 발송
-- [ ] Gmail API 설정 (또는 SMTP)
-- [ ] 리포트 PDF 첨부 이메일 발송
-- [ ] 슬랙 웹훅 통합 (선택)
-- [ ] 발송 실패 시 재시도 로직
-
-### Phase 5: 스케줄러 & 히스토리
-- [ ] 크론 등록 (매월 1일 09:00)
-- [ ] 월별 리포트 아카이빙
-- [ ] 리포트 메타데이터 관리 (JSON)
-- [ ] 웹 대시보드에서 리포트 목록 조회 (향후)
-
-## 📊 예상 산출물
-
-| 산출물 | 설명 |
-|---|---|
-| `output/YYYY-MM월간리포트.md` | 월간 리포트 Markdown |
-| `output/YYYY-MM월간리포트.pdf` | 월간 리포트 PDF |
-| `scheduler/run_monthly_report.sh` | 리포트 생성 실행 스크립트 |
-| `templates/monthly_report.md.j2` | Jinja2 리포트 템플릿 |
-
-## 🔗 연관 프로젝트
-
-- **[고객분석 대시보드](https://github.com/hdmswjd98/itnew/tree/customer-analysis)**: 리포트의 데이터 소스
-- **[품목 분석](https://github.com/hdmswjd98/itnew/tree/product-analysis)**: 품목별 리포트 확장 (향후)
-
-## 📬 팀 협업
-
-| 담당 | 브랜치 | 주요 작업 |
-|---|---|---|
-| 데이터 분석가 | `monthly-report` | 리포트 템플릿 작성, 데이터 바인딩 |
-| 운영 담당자 | `monthly-report` | 이메일 발송 설정, 스케줄러 관리 |
-| 프론트엔지니어 | `monthly-report` | PDF 스타일링, 웹 뷰어 개발 |
-
-## 📝 월간 리포트 포함 내용 (11개 섹션)
-
-| # | 섹션 | 내용 |
-|---|---|---|
-| 1 | 조회 기간 및 분석 조건 | 분석 기준일, 조회 기간, 대상 고객/주문 수 |
-| 2 | 데이터 검증 결과 | 11개 검증 항목 통과/실패, 제외 데이터 상세 |
-| 3 | 고객군별 현황 | 신규/재이용/이탈위험 고객 수·비율 |
-| 4 | 고객별 이용 지표 | 5대 지표 테이블 |
-| 5 | 고객군 분류 결과 | 신규/재이용/이탈위험/일반 분류 |
-| 6 | 이탈 위험 고객 목록 | 위험/주의 등급 알럿 |
-| 7 | 고객군별 지역 특성 | 군별 지역 분포 |
-| 8 | 고객군별 업종 특성 | 군별 업종 분포 |
-| 9 | 고객군별 품목 분석 | 탭 전환 + 이중축 차트 |
-| 10 | AI 분석 요약 | 5문장 인사이트 |
-| 11 | 분석 결과 검증 결과 | 10개 검증 항목 통과/실패 |
-
-## 🚀 실행 예시
+## 실행
 
 ```bash
-# 수동 실행
-python generate_report.py --month 2026-07
-
-# 크론으로 자동 실행 (매월 1일 09:00)
-0 9 1 * * cd /path/to/itnew && python generate_report.py --month $(date +\%Y-\%m)
+python3 dashboards/customer/analysis/run_pipeline.py
+python3 -m streamlit run app.py
 ```
+
+사이드바에서 `월간리포트`를 선택합니다.
+
+## 보고서 구성
+
+1. 당월 주요 이슈
+2. 주요 이슈별 조치 내역 및 결과
+3. 익월 계획
+4. 협력사 요청 사항
+5. 당월·전월 매출 및 전월 대비 증감
+6. 주문량과 주문건수
+7. 전체·신규·활동 회원 현황
+8. 품목별 배송 건수·배송 수량
+9. 월간 자동 요약
+
+실제 주문 데이터에 존재하는 주문량·주문건수·회원 현황은 자동 집계합니다. 제공받은 원본에는 매출 금액이 없으므로 당월 및 전월 매출은 보고서 작성자가 화면에서 직접 입력합니다.
+
+## 다운로드
+
+- Excel: 세로형 월간보고서 시트와 회원·주요 이슈 상세 시트
+- PDF: A4 세로형 보고서
+
+다운로드 파일에는 고객 ID, 전체 주소 등 고객별 민감 상세정보를 포함하지 않습니다. 월간보고서에는 월별 품목 현황을 포함하고, 더 깊은 자동분류 분석은 별도의 `품목 자동분류 및 분석` 화면에서 제공합니다.

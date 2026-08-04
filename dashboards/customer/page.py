@@ -223,6 +223,7 @@ def style_chart(fig, theme):
         paper_bgcolor=theme["bg"],
         plot_bgcolor=theme["card"],
         font_color=theme["text"],
+        font_family="Pretendard, sans-serif",
     )
     return fig
 
@@ -656,6 +657,7 @@ def render_main(data, theme):
             paper_bgcolor=theme["bg"],
             plot_bgcolor=theme["bg"],
             font_color=theme["text"],
+            font_family="Pretendard, sans-serif",
             height=620,
             autosize=True,
             margin=dict(l=0, r=0, t=0, b=8),

@@ -31,6 +31,8 @@ output/
 artifacts/
 analysis/
 data/
+dashboards/monthly/data/*.db
+dashboards/monthly/data/*.db-*
 
 # 입력 데이터 — 개인정보 보호를 위해 Git에서 제외
 dashboards/customer/data/input/*.csv

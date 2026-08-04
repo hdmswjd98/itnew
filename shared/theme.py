@@ -1,6 +1,17 @@
 """라이트·다크 테마 선택과 공통 스타일."""
 
+import base64
+from pathlib import Path
+
 import streamlit as st
+
+
+@st.cache_data
+def _pretendard_data_url():
+    """프로젝트에 포함된 Pretendard 웹폰트를 브라우저용 data URL로 변환한다."""
+    font_path = Path(__file__).resolve().parent / "assets" / "fonts" / "PretendardVariable.woff2"
+    encoded = base64.b64encode(font_path.read_bytes()).decode("ascii")
+    return f"data:font/woff2;base64,{encoded}"
 
 
 def render_theme():
@@ -25,6 +36,13 @@ def render_theme():
 
     css = """
     <style>
+      @font-face {
+        font-family: "Pretendard";
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+        src: url("__PRETENDARD_DATA__") format("woff2-variations");
+      }
       :root {
         --app-bg: __BG__;
         --sidebar-bg: __SIDEBAR__;
@@ -35,6 +53,17 @@ def render_theme():
         --kpi-card-bg: __KPI_CARD__;
         --kpi-value-color: __KPI_VALUE__;
         --kpi-muted-color: __KPI_MUTED__;
+        --app-font: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      html, body, .stApp, [data-testid="stAppViewContainer"],
+      [data-testid="stSidebar"], [data-testid="stSidebarContent"],
+      [data-testid="stMarkdownContainer"], [data-testid="stVerticalBlock"],
+      [data-testid="stMainBlockContainer"],
+      button, input, textarea, select, option, table, th, td,
+      [data-testid="stDataFrame"], [data-testid="stDataEditor"],
+      [data-testid="stMetric"], [data-baseweb], [role="option"] {
+        font-family: var(--app-font) !important;
+        font-synthesis: none;
       }
       .stApp, [data-testid="stAppViewContainer"] {
         background: var(--app-bg);
@@ -117,6 +146,104 @@ def render_theme():
         border-color: var(--border-color) !important;
       }
       [data-testid="stToggle"] p { color: var(--text-color); }
+      [data-baseweb="input"],
+      [data-baseweb="textarea"],
+      [data-baseweb="select"] > div,
+      [data-testid="stNumberInput"] [data-baseweb="input"],
+      [data-testid="stTextInput"] [data-baseweb="input"],
+      [data-testid="stTextArea"] [data-baseweb="textarea"] {
+        background: linear-gradient(135deg, rgba(103, 92, 231, .10), rgba(70, 76, 120, .04)), var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-color) !important;
+        border-radius: 10px !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+      }
+      [data-testid="stTextInput"],
+      [data-testid="stTextInput"] > div,
+      [data-testid="stTextInput"] div[data-baseweb="input"],
+      [data-testid="stTextInput"] div[data-baseweb="input"] > div,
+      [data-testid="stTextInput"] div[data-baseweb="base-input"],
+      [data-testid="stTextInputRootElement"],
+      [data-testid="stTextInputRootElement"] > div,
+      [data-testid="stNumberInput"] div[data-baseweb="input"],
+      [data-testid="stNumberInput"] div[data-baseweb="input"] > div,
+      [data-testid="stNumberInput"] div[data-baseweb="base-input"],
+      [data-testid="stTextArea"] div[data-baseweb="textarea"],
+      [data-testid="stTextArea"] div[data-baseweb="textarea"] > div {
+        background-color: var(--card-bg) !important;
+        background-image: linear-gradient(135deg, rgba(103, 92, 231, .11), rgba(70, 76, 120, .045)) !important;
+        color: var(--text-color) !important;
+        border-color: var(--border-color) !important;
+        color-scheme: __COLOR_SCHEME__ !important;
+      }
+      [data-baseweb="input"] input,
+      [data-baseweb="textarea"] textarea,
+      [data-testid="stNumberInput"] input,
+      [data-testid="stTextInput"] input,
+      [data-testid="stTextArea"] textarea {
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        background-color: var(--card-bg) !important;
+        background-image: linear-gradient(135deg, rgba(103, 92, 231, .11), rgba(70, 76, 120, .045)) !important;
+        box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0) !important;
+        color: var(--text-color) !important;
+        -webkit-text-fill-color: var(--text-color) !important;
+        caret-color: #8f7cf4 !important;
+        color-scheme: __COLOR_SCHEME__ !important;
+      }
+      .stTextInput div[data-baseweb="input"],
+      .stTextInput div[data-baseweb="base-input"],
+      .stNumberInput div[data-baseweb="input"],
+      .stNumberInput div[data-baseweb="base-input"],
+      .stTextArea div[data-baseweb="textarea"],
+      .stTextInput input,
+      .stNumberInput input,
+      .stTextArea textarea {
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+        -webkit-text-fill-color: var(--text-color) !important;
+      }
+      [data-baseweb="input"] input::placeholder,
+      [data-baseweb="textarea"] textarea::placeholder,
+      [data-testid="stTextInput"] input::placeholder,
+      [data-testid="stTextArea"] textarea::placeholder {
+        color: var(--muted-color) !important;
+        -webkit-text-fill-color: var(--muted-color) !important;
+        opacity: .78;
+      }
+      [data-baseweb="select"] span,
+      [data-baseweb="select"] svg,
+      [data-testid="stNumberInput"] button,
+      [data-testid="stNumberInput"] button svg {
+        color: var(--text-color) !important;
+        fill: var(--text-color) !important;
+      }
+      [data-baseweb="popover"],
+      [role="listbox"],
+      [role="option"] {
+        background: var(--sidebar-bg) !important;
+        color: var(--text-color) !important;
+      }
+      [role="option"]:hover,
+      [aria-selected="true"][role="option"] {
+        background: rgba(108, 92, 231, .22) !important;
+      }
+      [data-testid="stDownloadButton"] > button {
+        min-height: 46px;
+        border: 1px solid rgba(143, 124, 244, .45) !important;
+        border-radius: 11px !important;
+        background: linear-gradient(135deg, rgba(108, 92, 231, .24), rgba(66, 73, 125, .14)), var(--card-bg) !important;
+        color: var(--text-color) !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, .10);
+      }
+      [data-testid="stDownloadButton"] > button:hover {
+        border-color: #8f7cf4 !important;
+        transform: translateY(-1px);
+      }
+      [data-testid="stDownloadButton"] > button p {
+        color: var(--text-color) !important;
+        font-weight: 700 !important;
+      }
       .kpi-card {
         background: var(--card-bg);
         border: 1px solid var(--border-color);
@@ -344,6 +471,55 @@ def render_theme():
         padding: 0 !important;
         line-height: 0 !important;
       }
+      /* 공통 Typography: 한글 획이 뭉치지 않도록 400~600 범위로 제한한다. */
+      [data-testid="stAppViewContainer"] h1,
+      [data-testid="stSidebar"] h1,
+      .monthly-title {
+        font-family: var(--app-font) !important;
+        font-weight: 550 !important;
+      }
+      [data-testid="stAppViewContainer"] h2,
+      [data-testid="stAppViewContainer"] h3,
+      [data-testid="stAppViewContainer"] h4,
+      .section-title, .monthly-section-title, .customer-kpi-group-title {
+        font-family: var(--app-font) !important;
+        font-weight: 500 !important;
+      }
+      [data-testid="stAppViewContainer"] p,
+      [data-testid="stAppViewContainer"] li,
+      [data-testid="stCaptionContainer"],
+      [data-testid="stMarkdownContainer"],
+      .monthly-description, .monthly-plan, .monthly-ops-table td {
+        font-family: var(--app-font) !important;
+        font-weight: 400 !important;
+      }
+      [data-testid="stAppViewContainer"] label,
+      [data-testid="stSidebar"] label,
+      [data-testid="stMetricLabel"],
+      [data-testid="stTextInput"] label,
+      [data-testid="stTextArea"] label,
+      [data-testid="stNumberInput"] label,
+      button, button p, th,
+      .monthly-kpi-label, .customer-kpi-label {
+        font-family: var(--app-font) !important;
+        font-weight: 500 !important;
+      }
+      input, textarea, select, td,
+      [data-baseweb="input"] input,
+      [data-baseweb="textarea"] textarea {
+        font-family: var(--app-font) !important;
+        font-weight: 400 !important;
+      }
+      [data-testid="stMetricValue"],
+      .monthly-kpi-value, .customer-kpi-value, .kpi-value {
+        font-family: var(--app-font) !important;
+        font-weight: 600 !important;
+      }
+      [data-testid="stMarkdownContainer"] strong,
+      [data-testid="stMarkdownContainer"] b { font-weight: 500 !important; }
+      [data-testid="stSidebar"] .stButton > button p { font-weight: 500 !important; }
+      [data-testid="stSidebar"] .stButton > button[kind="primary"] p,
+      [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] p { font-weight: 600 !important; }
     </style>
     """
     replacements = {
@@ -356,6 +532,8 @@ def render_theme():
         "__KPI_CARD__": theme["kpi_card"],
         "__KPI_VALUE__": theme["kpi_value"],
         "__KPI_MUTED__": theme["kpi_muted"],
+        "__COLOR_SCHEME__": "light" if light else "dark",
+        "__PRETENDARD_DATA__": _pretendard_data_url(),
     }
     for placeholder, color in replacements.items():
         css = css.replace(placeholder, color)

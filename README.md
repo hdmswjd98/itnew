@@ -13,6 +13,20 @@ AI 기반 **고객 분석**, **월간 리포트**, **품목 데이터 분석**�
 
 ## 🚀 빠른 시작
 
+### Next.js 전환 버전 (`nextjs-migration` 브랜치)
+
+기존 Python 분석 로직은 `services/`에 유지하고 Next.js가 API를 통해 결과를
+조회·수정합니다. Streamlit 보존본은 `product-analysis` 브랜치에 있습니다.
+
+```bash
+cd web
+npm install
+npm run dev
+# → http://localhost:3000
+```
+
+프로덕션 검증은 `cd web && npm run build`로 실행합니다.
+
 ### 대시보드별 클론 & 실행
 
 ```bash

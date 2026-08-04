@@ -21,7 +21,7 @@ build/
 Thumbs.db
 
 # 입력 데이터 — 개인정보 보호를 위해 Git에서 제외
-dashboards/customer/data/input/*.csv
+customer-analysis/data/*.csv
 
 # 빈 폴더 구조는 Git에 유지
 !dashboards/customer/data/input/.gitkeep

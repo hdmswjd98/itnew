@@ -21,7 +21,7 @@ git clone -b customer-analysis https://github.com/hdmswjd98/itnew.git customer-a
 cd customer-analysis
 pip install -r requirements.txt
 # 데이터 준비 후:
-streamlit run streamlit_dashboard.py
+python3 -m streamlit run app.py
 # → http://localhost:8501
 
 # 2) 월간 리포트 (개발 중)
@@ -40,6 +40,29 @@ cd product-analysis
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+### 데이터 폴더
+
+고객분석 원본 CSV는 `dashboards/customer/data/input/`에 넣고, 파이프라인이
+생성하는 분석 결과는 `dashboards/customer/data/output/`에 저장됩니다.
+
+```text
+dashboards/customer/data/
+├── input/
+│   ├── members.csv
+│   ├── orders.csv
+│   ├── deliveries.csv
+│   └── invalid_orders.csv
+└── output/
+    ├── customer_metrics.csv
+    ├── customer_groups.csv
+    └── ...
+```
+
+```bash
+python3 dashboards/customer/analysis/run_pipeline.py
+python3 -m streamlit run app.py
 ```
 
 ## 📊 3대 대시보드 개요
@@ -132,7 +155,7 @@ pip install -r requirements.txt
 
 1. https://streamlit.io/cloud 에서 GitHub 계정 연동
 2. `itnew` 리포지토리 선택 → 원하는 브랜치 선택
-3. 메인 파일: `streamlit_dashboard.py` (customer-analysis)
+3. 메인 파일: `app.py`
 4. "Deploy!" 클릭 → 약 2분 후 URL 생성
 
 ### 로컬 / 사내 서버
@@ -141,7 +164,7 @@ pip install -r requirements.txt
 git clone -b <브랜치명> https://github.com/hdmswjd98/itnew.git
 cd itnew
 pip install -r requirements.txt
-streamlit run streamlit_dashboard.py
+python3 -m streamlit run app.py
 # → http://localhost:8501
 ```
 
@@ -163,70 +186,27 @@ def load_customer_metrics():
     return pd.DataFrame(response.data)
 ```
 
-## 📁 브랜치별 프로젝트 구조
+## 📁 통합 프로젝트 구조
 
-### `customer-analysis` 브랜치
 ```
 itnew/
-├── streamlit_dashboard.py      # 메인 대시보드 (Streamlit + Plotly, 11개 섹션)
-├── requirements.txt            # Python 패키지 의존성
-├── .gitignore                  # Git 제외 파일 목록
-├── README.md                   # 이 파일 (main 에서 복사)
-├── .env.example                # 환경변수 템플릿 (Supabase 등)
-├── data/                       # 원본 데이터 (members.csv, orders.csv, ...)
-│   ├── members.csv
-│   ├── orders.csv
-│   ├── deliveries.csv
-│   └── invalid_orders.csv
-├── analysis/                   # 분석 파이프라인 스크립트
-│   ├── run_pipeline.py         # 마스터 실행 스크립트 (8단계 일괄 실행)
-│   ├── validate.py             # 1. 데이터 검증
-│   ├── load_data.py            # 데이터 로드 헬퍼
-│   ├── merge_data.py           # 2. 데이터 병합
-│   ├── calc_metrics.py         # 3. 고객별 지표 계산
-│   ├── score_churn.py          # 4. 이탈 위험 점수 산정
-│   ├── classify.py             # 5. 고객군 분류
-│   ├── analyze_patterns.py     # 6. 패턴 분석 (지역/업종/품목)
-│   ├── run_validation.py       # 7. 최종 검증
-│   └── build_report.py         # 8. Markdown 보고서 생성
-├── crons/                      # 자동화 스크립트
-│   └── run_pipeline.sh         # 파이프라인 실행 + 크론 가이드
-└── artifacts/                  # 생성된 산출물 (gitignore)
-    ├── customer_metrics.csv
-    ├── customer_groups.csv
-    ├── churn_risk_customers.csv
-    ├── region_analysis.csv
-    ├── industry_analysis.csv
-    ├── product_analysis.csv
-    ├── ai_summary.txt
-    ├── validation_final.csv
-    └── customer_analysis_result.md
-```
-
-### `monthly-report` 브랜치 (예정)
-```
-itnew/
-├── generate_report.py          # 월간 리포트 생성 스크립트
+├── app.py                       # 통합 Streamlit 실행 파일
+├── streamlit_dashboard.py       # 기존 실행 명령 호환용
+├── dashboards/
+│   ├── customer/
+│   │   ├── page.py              # 고객분석 화면
+│   │   ├── analysis/             # 고객분석 파이프라인
+│   │   └── data/
+│   │       ├── input/            # 고객분석 원본 CSV
+│   │       └── output/           # 고객분석 산출물
+│   ├── monthly/
+│   │   └── page.py              # 월간리포트 화면
+│   └── product/
+│       └── page.py              # 품목 자동분류 및 분석 화면
+├── shared/
+│   ├── navigation.py            # 공통 사이드바
+│   └── theme.py                 # 라이트·다크 테마
 ├── requirements.txt
-├── .gitignore
-├── templates/                  # 리포트 템플릿
-│   └── monthly_report.md.j2    # Jinja2 템플릿
-├── output/                     # 생성된 리포트 (gitignore)
-│   └── 2026-07월간리포트.md
-└── README.md
-```
-
-### `product-analysis` 브랜치 (예정)
-```
-itnew/
-├── product_dashboard.py        # 품목 분석 Streamlit 대시보드
-├── requirements.txt
-├── .gitignore
-├── product_classifier.py       # 품목명 자동 분류기
-├── product_analyzer.py         # 품목별 수요 분석
-├── data/                       # 품목 데이터
-│   └── items.csv
-├── output/                     # 분석 결과
 └── README.md
 ```
 

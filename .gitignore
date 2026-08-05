@@ -1,0 +1,28 @@
+# --- Python 캐시 ---
+__pycache__/
+*.pyc
+*.pyo
+
+# --- 임시/출력/의존성 ---
+data/output/
+data/input/
+web/node_modules/
+web/.next/
+.next/
+
+# --- 임시 엑셀 ---
+~$*.xlsx
+*.xlsx.tmp
+
+# --- OS/편집기 ---
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# --- 민감/개별 환경 ---
+# 실제 주문·회원 데이터는 팀원 각자 환경에서 올리기
+*.xlsx
+
+# --- 개인 설정/캐시 (팀 공유 불필요) ---
+.pi/

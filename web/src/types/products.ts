@@ -11,4 +11,6 @@ export type ProductDashboardData = {
   categories: CategorySummary[];
   categoryDetails: CategoryDetail[];
   reviewItems: ReviewItem[];
+  productAnalytics: { name: string; orders: number; quantity: number; rate: number; previousOrders: number; change: number | null; items: string[] }[];
+  aiReport: string[];
 };

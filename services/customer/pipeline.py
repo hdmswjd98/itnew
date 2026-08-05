@@ -21,6 +21,7 @@ from .build_report import build_report as step8_report
 from .churn import score_churn as step4_churn
 from .classify import classify_groups as step5_classify
 from .import_real_data import import_real_data
+from .geocode import geocode_orders
 from .load_data import load_data as step2_load
 from .merge_data import merge_data as step3_merge
 from .metrics import calc_metrics as step4_metrics
@@ -40,17 +41,27 @@ def run_pipeline():
     print("=" * 60)
 
     # 파이프라인 각 단계 실행
+    def geocode_step():
+        try:
+            return geocode_orders()
+        except RuntimeError as error:
+            if "KAKAO_REST_API_KEY" in str(error):
+                print(f"⚠️ 상세주소 좌표 변환 생략: {error}")
+                return None
+            raise
+
     steps = [
         ("1. 실제 Excel 변환", import_real_data),
-        ("2. 데이터 검증", step1_validate),
-        ("3. 데이터 로드", step2_load),
-        ("4. 데이터 병합", step3_merge),
-        ("5. 고객별 지표 계산", step4_metrics),
-        ("6. 이탈 위험 점수 산정", step4_churn),
-        ("7. 고객군 분류", step5_classify),
-        ("8. 패턴 분석", step6_pattern),
-        ("9. 최종 검증", step7_validate),
-        ("10. 보고서 생성", step8_report),
+        ("2. 상세주소 GPS 변환", geocode_step),
+        ("3. 데이터 검증", step1_validate),
+        ("4. 데이터 로드", step2_load),
+        ("5. 데이터 병합", step3_merge),
+        ("6. 고객별 지표 계산", step4_metrics),
+        ("7. 이탈 위험 점수 산정", step4_churn),
+        ("8. 고객군 분류", step5_classify),
+        ("9. 패턴 분석", step6_pattern),
+        ("10. 최종 검증", step7_validate),
+        ("11. 보고서 생성", step8_report),
     ]
 
     for step_name, step_func in steps:

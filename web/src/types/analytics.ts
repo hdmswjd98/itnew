@@ -8,9 +8,35 @@ export type CustomerData = {
   returningCustomers: number;
   customers: Record<string, string>[];
   regions: { group: string; name: string; customers: number; rate: number }[];
+  pickupRegions: { group: string; name: string; orders: number }[];
+  deliveryRegions: { group: string; name: string; orders: number }[];
+  pickupGrids: { group: string; lon: number; lat: number; orders: number }[];
+  deliveryGrids: { group: string; lon: number; lat: number; orders: number }[];
+  channels: { group: string; name: string; orders: number; quantity: number }[];
   industries: { group: string; name: string; customers: number; orders: number; quantity: number }[];
   topProducts: { group: string; itemName: string; orders: number; quantity: number }[];
   validation: { item: string; status: string; detail: string }[];
+  categoryOptions: { main: string; sub: string }[];
+  today: {
+    date: string;
+    orders: number;
+    previousOrders: number;
+    newCustomers: number;
+    previousNewCustomers: number;
+    hourlyOrders: { hour: string; orders: number }[];
+    monthOrders: number;
+    monthNewCustomers: number;
+    mau: number;
+    orderList: { orderId: string; orderTime: string; channel: string; itemName: string; sourceItemName: string; quantity: number; mainCategory: string; subCategory: string }[];
+  };
+  operations: {
+    from: string; to: string; days: number;
+    orders: number; previousOrders: number; newCustomers: number; previousNewCustomers: number;
+    hourlyOrders: { hour: string; orders: number }[];
+    weekdayOrders: { name: string; orders: number }[];
+    monthlyOrders: { month: string; orders: number }[];
+    orderList: { orderId: string; orderTime: string; channel: string; itemName: string; sourceItemName: string; quantity: number; mainCategory: string; subCategory: string }[];
+  };
 };
 
 export type MonthlyReport = {
@@ -27,4 +53,5 @@ export type MonthlyReport = {
 export type MonthlyData = {
   reports: MonthlyReport[];
   trends: { month: string; orders: number; customers: number; quantity: number }[];
+  total_members: number;
 };

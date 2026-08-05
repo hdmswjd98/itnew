@@ -15,12 +15,10 @@ async function csv<T>(name: string): Promise<T[]> {
 
 export async function GET(request: NextRequest) {
   try {
-    const [groups, metrics, churn, regions, industries, products, validation, orders, deliveries, coordinates, classifications, members] = await Promise.all([
+    const [groups, metrics, churn, products, validation, orders, deliveries, coordinates, classifications, members] = await Promise.all([
       csv<Record<string, string>>("customer_groups.csv"),
       csv<Record<string, string>>("customer_metrics.csv"),
       csv<Record<string, string>>("churn_scores.csv"),
-      csv<Record<string, string>>("region_analysis.csv"),
-      csv<Record<string, string>>("industry_analysis.csv"),
       csv<Record<string, string>>("product_analysis.csv"),
       csv<Record<string, string>>("validation_results.csv"),
       csv<Record<string, string>>(path.join("..", "input", "orders.csv")),
@@ -52,11 +50,16 @@ export async function GET(request: NextRequest) {
     const pickupGridMap = new Map<string,{group:string;lon:number;lat:number;orders:number}>();
     const deliveryGridMap = new Map<string,{group:string;lon:number;lat:number;orders:number}>();
     const firstOrderByCustomer = new Map<string, string>();
+    const firstOrderIdByCustomer = new Map<string, string>();
     for (const order of orders) {
       const orderDate = order.order_date?.slice(0, 10) || "";
       const firstOrder = firstOrderByCustomer.get(order.customer_id);
-      if (orderDate && (!firstOrder || orderDate < firstOrder)) firstOrderByCustomer.set(order.customer_id, orderDate);
+      if (orderDate && (!firstOrder || orderDate < firstOrder)) {
+        firstOrderByCustomer.set(order.customer_id, orderDate);
+        firstOrderIdByCustomer.set(order.customer_id, order.order_id);
+      }
     }
+    const memberTypeByCustomer = new Map(members.map((row) => [row.customer_id, row.member_type || "미상"]));
     // 고객군(신규/일반/재이용/이탈 위험)은 조회기간(from~to)에 맞춰 매 요청마다 재계산한다.
     // 신규=조회기간 내 첫 주문, 일반/재이용=조회기간 내 주문 1회/2회 이상(신규·이탈위험 제외), 이탈 위험=평균 주문주기 대비 최근 주문 지연(파이프라인의 전역 판정을 그대로 사용).
     const memberIds = new Set(members.map((row) => row.customer_id));
@@ -74,7 +77,16 @@ export async function GET(request: NextRequest) {
       const churnGrade = base?.["이탈 위험 등급"] ?? "판정 보류";
       const periodOrders = periodOrderCountByCustomer.get(id) ?? 0;
       const group = isNew ? "신규 고객" : ["주의","위험"].includes(churnGrade) ? "이탈 위험 고객" : periodOrders >= 2 ? "재이용 고객" : "일반 고객";
-      return { ...base, customer_id: id, "고객군": group };
+      // 판단 근거는 조회기간(classifyFrom~classifyTo) 기준으로 새로 만든다 — CSV의 문구를 그대로 쓰면
+      // "최신 분석 월" 같은 고정된 옛 기준이 그대로 노출돼 지금 보고 있는 기간과 어긋난다.
+      const groupReason = isNew
+        ? `최초 주문일(${firstOrder})이 조회기간(${classifyFrom}~${classifyTo}) 내에 발생`
+        : ["주의","위험"].includes(churnGrade)
+        ? (base?.["판단 근거"] ?? "이탈 위험 판정 근거 없음")
+        : periodOrders >= 2
+        ? `조회기간(${classifyFrom}~${classifyTo}) 내 주문 ${periodOrders}회로 재이용 고객`
+        : `조회기간(${classifyFrom}~${classifyTo}) 내 주문 1회로 일반 고객`;
+      return { ...base, customer_id: id, "고객군": group, "고객군 판단 근거": groupReason };
     });
     const groupByCustomer = new Map(analysisGroups.map((row) => [row.customer_id, row["고객군"]]));
     const metricsById = new Map(metrics.map((row) => [row.customer_id, row]));
@@ -104,6 +116,38 @@ export async function GET(request: NextRequest) {
       const coordinate=coordinatesByOrder.get(order.order_id);
       for(const [map,lonValue,latValue] of [[pickupGridMap,coordinate?.origin_lon,coordinate?.origin_lat],[deliveryGridMap,coordinate?.destination_lon,coordinate?.destination_lat]] as const){const lon=Number(lonValue),lat=Number(latValue);if(!Number.isFinite(lon)||!Number.isFinite(lat))continue;const gridLon=Math.round(lon/.0054)*.0054;const gridLat=Math.round(lat/.0045)*.0045;const key=`${group}\u0000${gridLon.toFixed(4)}\u0000${gridLat.toFixed(4)}`;const cell=map.get(key)??{group,lon:gridLon,lat:gridLat,orders:0};cell.orders+=1;map.set(key,cell)}
     }
+    // 지역·업종 분포도 파이차트와 동일한 동적 고객군 전체 인원 기준으로 계산한다 (region_analysis.csv/industry_analysis.csv는 조회기간과 무관한 배치 산출물이라 더 이상 쓰지 않음).
+    // 인원수는 analysisCustomerIds 전체(이번 기간 주문이 0건인 이탈위험 고객 포함) 기준으로 세고, 주문·수량만 이번 기간 주문에서 더한다.
+    const regionByGroupMap = new Map<string, { group: string; name: string; customers: number }>();
+    const industryByGroupMap = new Map<string, { group: string; name: string; customers: number; orders: number; quantity: number }>();
+    for (const id of analysisCustomerIds) {
+      const group = groupByCustomer.get(id);
+      if (!group) continue;
+      const firstOrderId = firstOrderIdByCustomer.get(id);
+      const region = (firstOrderId && deliveryByOrder.get(firstOrderId)?.destination_region) || "미상";
+      const regionKey = `${group} ${region}`;
+      const regionItem = regionByGroupMap.get(regionKey) ?? { group, name: region, customers: 0 };
+      regionItem.customers += 1;
+      regionByGroupMap.set(regionKey, regionItem);
+      const industry = memberTypeByCustomer.get(id) || "미상";
+      const industryKey = `${group} ${industry}`;
+      const industryItem = industryByGroupMap.get(industryKey) ?? { group, name: industry, customers: 0, orders: 0, quantity: 0 };
+      industryItem.customers += 1;
+      industryByGroupMap.set(industryKey, industryItem);
+    }
+    for (const order of analysisOrders) {
+      const group = groupByCustomer.get(order.customer_id);
+      if (!group) continue;
+      const industry = memberTypeByCustomer.get(order.customer_id) || "미상";
+      const industryItem = industryByGroupMap.get(`${group} ${industry}`);
+      if (!industryItem) continue;
+      industryItem.orders += 1;
+      industryItem.quantity += Number(order.order_quantity) || 0;
+    }
+    const regionGroupTotals = new Map<string, number>();
+    for (const item of regionByGroupMap.values()) regionGroupTotals.set(item.group, (regionGroupTotals.get(item.group) ?? 0) + item.customers);
+    const regionBreakdown = [...regionByGroupMap.values()].map((item) => ({ ...item, rate: Math.round((item.customers / (regionGroupTotals.get(item.group) || 1)) * 1000) / 10 }));
+    const industryBreakdown = [...industryByGroupMap.values()];
     const latestDate = (from || to ? analysisOrders : orders).reduce((latest, row) => row.order_date?.slice(0, 10) > latest ? row.order_date.slice(0, 10) : latest, "");
     const previousDate = latestDate ? new Date(`${latestDate}T00:00:00`) : new Date();
     previousDate.setDate(previousDate.getDate() - 1);
@@ -136,13 +180,13 @@ export async function GET(request: NextRequest) {
       riskCustomers: risk.length,
       returningCustomers: analysisGroups.filter((row) => row["고객군"] === "재이용 고객").length,
       customers,
-      regions: regions.map((row) => ({ group: row["고객군"], name: row.region, customers: Number(row["고객 수"]), rate: Number(row["비율"]) })),
+      regions: regionBreakdown,
       pickupRegions: [...pickupMap.values()],
       deliveryRegions: [...destinationMap.values()],
       pickupGrids: [...pickupGridMap.values()],
       deliveryGrids: [...deliveryGridMap.values()],
       channels: [...channelMap.values()],
-      industries: industries.map((row) => ({ group: row["고객군"], name: row.industry, customers: Number(row["고객 수"]), orders: Number(row["주문_건수"]), quantity: Number(row["배송_수량"]) })),
+      industries: industryBreakdown,
       topProducts: [...productMap.values()].sort((a,b)=>b.orders-a.orders),
       validation: validation.map((row) => ({ item: row["항목"], status: row["상태"], detail: row["내용"] })),
       categoryOptions:[...new Map(classifications.map((row)=>[`${row["대분류"]}\u0000${row["중분류"]}`,{main:row["대분류"],sub:row["중분류"]}])).values()].filter((row)=>row.main&&row.sub),

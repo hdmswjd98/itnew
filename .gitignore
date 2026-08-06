@@ -31,6 +31,7 @@ Thumbs.db
 /artifacts/
 /references/
 /analysis/
+/dashboard_artifact.html
 /data/raw/*
 /data/input/*
 /data/output/*

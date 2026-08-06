@@ -27,15 +27,10 @@ export async function GET(request: NextRequest) {
       csv<Record<string, string>>("product_classification.csv").catch(()=>[]),
       csv<Record<string, string>>(path.join("..", "input", "members.csv")),
     ]);
-    // from/to를 아예 안 넘기면(예: 파라미터 없이 API를 직접 호출) "조회기간"이 사실상
-    // 전체 데이터 역사 전체가 돼버려서, 모든 고객의 첫 주문이 그 안에 트리비얼하게
-    // 포함돼 전원이 "신규 고객"으로 잘못 분류된다. 실제 대시보드(dashboard-shell.tsx)는
-    // 항상 명시적 from/to를 보내므로 이 경로를 안 타지만, 안전하게 "최신 달"을 기본값으로
-    // 둔다(과거 classify.py가 쓰던 것과 같은 기준).
-    const latestOrderDate = orders.reduce((latest, row) => { const d = row.order_date?.slice(0,10) || ""; return d > latest ? d : latest; }, "");
-    const defaultFrom = latestOrderDate ? `${latestOrderDate.slice(0,7)}-01` : "";
-    const from = request.nextUrl.searchParams.get("from") || defaultFrom;
-    const to = request.nextUrl.searchParams.get("to") || latestOrderDate;
+    // from/to가 없으면(파라미터 없이 API를 직접 호출) 조회 범위는 "전체 기간"이 맞다
+    // (월별 추이 등이 처음 달부터 다 나와야 하므로, 여기서는 좁히지 않는다).
+    const from = request.nextUrl.searchParams.get("from") || "";
+    const to = request.nextUrl.searchParams.get("to") || "";
     const analysisOrders = orders.filter((row) => (!from || row.order_date.slice(0,10) >= from) && (!to || row.order_date.slice(0,10) <= to));
     const activeCustomerIds = new Set(analysisOrders.map((row)=>row.customer_id));
     const countBy = (rows: Record<string, string>[], key: string) => {
@@ -73,8 +68,14 @@ export async function GET(request: NextRequest) {
     const groupRowByCustomer = new Map(groups.map((row) => [row.customer_id, row]));
     const periodOrderCountByCustomer = new Map<string, number>();
     for (const order of analysisOrders) periodOrderCountByCustomer.set(order.customer_id, (periodOrderCountByCustomer.get(order.customer_id) ?? 0) + 1);
-    const classifyFrom = from || orders.reduce((value, row) => !value || row.order_date.slice(0,10) < value ? row.order_date.slice(0,10) : value, "");
-    const classifyTo = to || orders.reduce((value, row) => row.order_date.slice(0,10) > value ? row.order_date.slice(0,10) : value, "");
+    // 신규 판정 기준(classifyFrom~To)은 조회 범위(from/to)와 별개다 — 조회 범위가
+    // "전체 기간"(from/to 없음)이어도 "신규"라는 개념 자체는 어떤 기준 달이 있어야
+    // 의미가 있으므로, 이때는 "최신 달"을 기본값으로 쓴다(과거 classify.py와 같은 기준).
+    // 조회 범위 전체를 신규 판정 기준으로 쓰면(예전 버그) 전체 역사 안에 있는 모든
+    // 고객이 트리비얼하게 "신규"가 되어버린다.
+    const latestOrderDate = orders.reduce((latest, row) => { const d = row.order_date?.slice(0,10) || ""; return d > latest ? d : latest; }, "");
+    const classifyFrom = from || (latestOrderDate ? `${latestOrderDate.slice(0,7)}-01` : "");
+    const classifyTo = to || latestOrderDate;
     const atRiskCustomerIds = new Set(groups.filter((row) => ["주의","위험"].includes(row["이탈 위험 등급"])).map((row) => row.customer_id));
     const analysisCustomerIds = [...new Set([...activeCustomerIds, ...atRiskCustomerIds])].filter((id) => memberIds.has(id));
     const analysisGroups = analysisCustomerIds.map((id) => {

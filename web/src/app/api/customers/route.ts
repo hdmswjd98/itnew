@@ -27,8 +27,15 @@ export async function GET(request: NextRequest) {
       csv<Record<string, string>>("product_classification.csv").catch(()=>[]),
       csv<Record<string, string>>(path.join("..", "input", "members.csv")),
     ]);
-    const from = request.nextUrl.searchParams.get("from") || "";
-    const to = request.nextUrl.searchParams.get("to") || "";
+    // from/to를 아예 안 넘기면(예: 파라미터 없이 API를 직접 호출) "조회기간"이 사실상
+    // 전체 데이터 역사 전체가 돼버려서, 모든 고객의 첫 주문이 그 안에 트리비얼하게
+    // 포함돼 전원이 "신규 고객"으로 잘못 분류된다. 실제 대시보드(dashboard-shell.tsx)는
+    // 항상 명시적 from/to를 보내므로 이 경로를 안 타지만, 안전하게 "최신 달"을 기본값으로
+    // 둔다(과거 classify.py가 쓰던 것과 같은 기준).
+    const latestOrderDate = orders.reduce((latest, row) => { const d = row.order_date?.slice(0,10) || ""; return d > latest ? d : latest; }, "");
+    const defaultFrom = latestOrderDate ? `${latestOrderDate.slice(0,7)}-01` : "";
+    const from = request.nextUrl.searchParams.get("from") || defaultFrom;
+    const to = request.nextUrl.searchParams.get("to") || latestOrderDate;
     const analysisOrders = orders.filter((row) => (!from || row.order_date.slice(0,10) >= from) && (!to || row.order_date.slice(0,10) <= to));
     const activeCustomerIds = new Set(analysisOrders.map((row)=>row.customer_id));
     const countBy = (rows: Record<string, string>[], key: string) => {

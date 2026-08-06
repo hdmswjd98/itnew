@@ -7,6 +7,10 @@ Next.js 대시보드를 브라우저로 열 수 없는 실행 환경(예: 타임
 품목분류 3개 탭의 정적 HTML로 옮기기만 한다 — 계산 로직을 파이썬으로 다시
 구현하지 않는다. 탭 전환은 CSS(라디오버튼)만으로 동작해 외부 JS 의존이 없다.
 
+배색은 실제 웹앱(web/src/app/globals.css)의 브랜드 컬러(남색 #13263d,
+주황/골드 #fa9c00·#f6c453)를 그대로 따른다 — 고객군(신규/일반/재이용/이탈위험)은
+상태를 나타내는 값이라 브랜드 색과 별도의 의미색(파랑/회색/초록/빨강)을 쓴다.
+
 사용법:
     python3 -m services.report.dashboard_artifact
     python3 -m services.report.dashboard_artifact --from 2026-06-01 --to 2026-06-07
@@ -19,7 +23,8 @@ from pathlib import Path
 
 from shared.paths import REPO_ROOT
 
-GROUP_COLORS = {"신규 고객": "#38bdf8", "일반 고객": "#94a3b8", "재이용 고객": "#4ade80", "이탈 위험 고객": "#f87171"}
+GROUP_COLORS = {"신규 고객": "#2563eb", "일반 고객": "#64748b", "재이용 고객": "#16a34a", "이탈 위험 고객": "#dc2626"}
+ACCENT = "var(--accent)"
 
 
 def fetch_json(url, timeout=20):
@@ -40,7 +45,7 @@ def aggregate_by_name(items, name_key="name", value_key="orders"):
     return sorted(({"name": name, value_key: value} for name, value in totals.items()), key=lambda x: -x[value_key])
 
 
-def hbar_rows(items, label_key, value_key, unit="", color="#38bdf8", limit=10):
+def hbar_rows(items, label_key, value_key, unit="", color=ACCENT, limit=10):
     items = items[:limit]
     max_value = max((item.get(value_key, 0) for item in items), default=1) or 1
     rows = []
@@ -57,7 +62,7 @@ def hbar_rows(items, label_key, value_key, unit="", color="#38bdf8", limit=10):
     return "\n".join(rows) or '<p class="muted">데이터 없음</p>'
 
 
-def vbar_chart(items, label_key, value_key, color="#38bdf8"):
+def vbar_chart(items, label_key, value_key, color=ACCENT):
     """요일별/시간대별처럼 순서가 고정된 항목을 세로 막대로 그린다."""
     max_value = max((item.get(value_key, 0) for item in items), default=1) or 1
     bars = []
@@ -84,16 +89,16 @@ def kpi_grid(kpis):
 def render_operations_tab(customers):
     operations = customers.get("operations", {})
     kpis = [
-        ("조회기간 주문", f"{operations.get('orders', 0):,}건", "#38bdf8"),
-        ("직전 기간 주문", f"{operations.get('previousOrders', 0):,}건", "#94a3b8"),
-        ("조회기간 신규 고객", f"{operations.get('newCustomers', 0):,}명", "#4ade80"),
-        ("조회 일수", f"{operations.get('days', 0):,}일", "#818cf8"),
+        ("조회기간 주문", f"{operations.get('orders', 0):,}건", ACCENT),
+        ("직전 기간 주문", f"{operations.get('previousOrders', 0):,}건", "var(--muted)"),
+        ("조회기간 신규 고객", f"{operations.get('newCustomers', 0):,}명", GROUP_COLORS["신규 고객"]),
+        ("조회 일수", f"{operations.get('days', 0):,}일", "var(--navy-tint)"),
     ]
-    weekday_html = vbar_chart(operations.get("weekdayOrders", []), "name", "orders", "#38bdf8")
-    hourly_html = vbar_chart(operations.get("hourlyOrders", []), "hour", "orders", "#818cf8")
+    weekday_html = vbar_chart(operations.get("weekdayOrders", []), "name", "orders", ACCENT)
+    hourly_html = vbar_chart(operations.get("hourlyOrders", []), "hour", "orders", "var(--navy-tint)")
     monthly_rows = hbar_rows(
         sorted(operations.get("monthlyOrders", []), key=lambda m: m.get("month", "")),
-        "month", "orders", "건", "#4ade80", limit=12,
+        "month", "orders", "건", ACCENT, limit=12,
     )
     return f"""
     <div class="grid">{kpi_grid(kpis)}</div>
@@ -107,26 +112,26 @@ def render_customer_tab(customers):
     group_summary = customers.get("groupSummary", [])
     total_customers = customers.get("totalCustomers", 0)
     kpis = [
-        ("전체 고객", f"{total_customers:,}명", "#38bdf8"),
-        ("재이용 고객", f"{customers.get('returningCustomers', 0):,}명", "#4ade80"),
-        ("이탈 위험 고객", f"{customers.get('riskCustomers', 0):,}명", "#f87171"),
-        ("이탈 분석 대상", f"{customers.get('eligibleCustomers', 0):,}명", "#94a3b8"),
+        ("전체 고객", f"{total_customers:,}명", "var(--text)"),
+        ("재이용 고객", f"{customers.get('returningCustomers', 0):,}명", GROUP_COLORS["재이용 고객"]),
+        ("이탈 위험 고객", f"{customers.get('riskCustomers', 0):,}명", GROUP_COLORS["이탈 위험 고객"]),
+        ("이탈 분석 대상", f"{customers.get('eligibleCustomers', 0):,}명", "var(--muted)"),
     ]
     group_rows = "\n".join(
         f'<div class="bar-row">'
-        f'<span class="bar-label">{esc(row["name"])}</span>'
+        f'<span class="bar-label"><span class="dot" style="background:{GROUP_COLORS.get(row["name"], ACCENT)}"></span>{esc(row["name"])}</span>'
         f'<div class="bar-track"><div class="bar-fill" style="width:{round(row["count"]/max(total_customers,1)*100,1)}%;'
-        f'background:{GROUP_COLORS.get(row["name"], "#38bdf8")}"></div></div>'
+        f'background:{GROUP_COLORS.get(row["name"], ACCENT)}"></div></div>'
         f'<span class="bar-value">{row["count"]:,}명</span>'
         f"</div>"
         for row in group_summary
     ) or '<p class="muted">데이터 없음</p>'
     region_rows = hbar_rows(
         sorted(customers.get("regions", []), key=lambda r: -r.get("customers", 0)),
-        "name", "customers", "명", "#818cf8",
+        "name", "customers", "명", ACCENT,
     )
-    industry_rows = hbar_rows(aggregate_by_name(customers.get("industries", []), "name", "customers"), "name", "customers", "명", "#facc15")
-    channel_rows = hbar_rows(aggregate_by_name(customers.get("channels", []), "name", "orders"), "name", "orders", "건", "#4ade80")
+    industry_rows = hbar_rows(aggregate_by_name(customers.get("industries", []), "name", "customers"), "name", "customers", "명", "var(--navy-tint)")
+    channel_rows = hbar_rows(aggregate_by_name(customers.get("channels", []), "name", "orders"), "name", "orders", "건", ACCENT)
     return f"""
     <div class="grid">{kpi_grid(kpis)}</div>
     <div class="card"><h2>고객군 분포</h2>{group_rows}</div>
@@ -143,16 +148,16 @@ def render_product_tab(products):
     classified = products.get("classified", 0)
     rate = (classified / total * 100) if total else 0
     kpis = [
-        ("전체 품목 건수", f"{total:,}건", "#38bdf8"),
-        ("자동분류율", f"{rate:.1f}%", "#4ade80"),
-        ("검토 필요", f"{products.get('reviewCount', 0):,}건", "#f87171"),
-        ("고유 품목", f"{products.get('uniqueItems', 0):,}개", "#818cf8"),
+        ("전체 품목 건수", f"{total:,}건", "var(--text)"),
+        ("자동분류율", f"{rate:.1f}%", GROUP_COLORS["재이용 고객"]),
+        ("검토 필요", f"{products.get('reviewCount', 0):,}건", GROUP_COLORS["이탈 위험 고객"]),
+        ("고유 품목", f"{products.get('uniqueItems', 0):,}개", ACCENT),
     ]
     product_items = sorted(products.get("productAnalytics", []), key=lambda p: -p.get("orders", 0))
-    product_rows = hbar_rows(product_items, "name", "orders", "건", "#facc15")
+    product_rows = hbar_rows(product_items, "name", "orders", "건", ACCENT)
     category_rows = hbar_rows(
         sorted(products.get("categories", []), key=lambda c: -c.get("count", 0)),
-        "name", "count", "건", "#818cf8",
+        "name", "count", "건", "var(--navy-tint)",
     )
     ai_report = products.get("aiReport", [])
     ai_html = "".join(f'<p>{esc(line)}</p>' for line in ai_report) or '<p class="muted">AI 요약 없음</p>'
@@ -177,40 +182,50 @@ def render(customers, products, period_label, source):
 <meta charset="UTF-8">
 <title>잇뉴 대시보드 요약 — {esc(period_label)}</title>
 <style>
-  :root{{--bg:#0f172a;--panel:#1e293b;--border:#334155;--text:#e2e8f0;--muted:#94a3b8}}
+  :root{{
+    --bg:#f6f8fb; --panel:#ffffff; --border:#e6eaf0; --text:#17202a; --muted:#64748b;
+    --heading:#13263d; --navy-tint:#3a5578; --accent:#f6c453; --accent-soft:#fff5e6;
+  }}
+  @media (prefers-color-scheme: dark){{
+    :root{{--bg:#111827;--panel:#182234;--border:#2b3648;--text:#f1f5f9;--muted:#94a3b8;--heading:#f1f5f9;--navy-tint:#7d93b3;--accent:#d97706;--accent-soft:#3a2a12}}
+  }}
+  :root[data-theme="dark"]{{--bg:#111827;--panel:#182234;--border:#2b3648;--text:#f1f5f9;--muted:#94a3b8;--heading:#f1f5f9;--navy-tint:#7d93b3;--accent:#d97706;--accent-soft:#3a2a12}}
+  :root[data-theme="light"]{{--bg:#f6f8fb;--panel:#ffffff;--border:#e6eaf0;--text:#17202a;--muted:#64748b;--heading:#13263d;--navy-tint:#3a5578;--accent:#f6c453;--accent-soft:#fff5e6}}
+
   *{{box-sizing:border-box;margin:0;padding:0}}
-  body{{background:var(--bg);color:var(--text);font-family:-apple-system,'Noto Sans KR',sans-serif;padding:24px}}
-  h1{{font-size:20px;margin-bottom:4px}}
+  body{{background:var(--bg);color:var(--text);font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",-apple-system,system-ui,sans-serif;padding:28px;transition:background .2s,color .2s}}
+  h1{{font-size:21px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px;color:var(--heading)}}
   .sub{{color:var(--muted);font-size:13px;margin-bottom:18px}}
-  .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}}
+  .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}}
   .grid-2{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}}
   .kpi{{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}}
-  .kpi-label{{font-size:11px;color:var(--muted);text-transform:uppercase}}
-  .kpi-value{{font-size:22px;font-weight:700;margin-top:4px}}
+  .kpi-label{{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}}
+  .kpi-value{{font-size:23px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}}
   .card{{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}}
-  .card h2{{font-size:13px;color:var(--muted);text-transform:uppercase;margin-bottom:12px}}
+  .card h2{{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;font-weight:700}}
   .bar-row{{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}}
-  .bar-label{{width:110px;flex-shrink:0;text-align:right;color:var(--text)}}
-  .bar-track{{flex:1;background:#0b1220;border-radius:6px;height:14px;overflow:hidden}}
+  .bar-label{{width:130px;flex-shrink:0;text-align:right;color:var(--text);display:flex;align-items:center;justify-content:flex-end;gap:6px}}
+  .dot{{width:8px;height:8px;border-radius:50%;flex-shrink:0}}
+  .bar-track{{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;height:14px;overflow:hidden}}
   .bar-fill{{height:100%;border-radius:6px}}
-  .bar-value{{width:60px;flex-shrink:0;color:var(--muted)}}
+  .bar-value{{width:64px;flex-shrink:0;color:var(--muted);font-variant-numeric:tabular-nums}}
   .vbar-chart{{display:flex;align-items:flex-end;gap:4px;height:140px;padding-top:10px}}
   .vbar-col{{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}}
-  .vbar-track{{flex:1;width:100%;display:flex;align-items:flex-end;background:#0b1220;border-radius:4px;overflow:hidden}}
+  .vbar-track{{flex:1;width:100%;display:flex;align-items:flex-end;background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden}}
   .vbar-fill{{width:100%;border-radius:4px 4px 0 0}}
   .vbar-label{{font-size:9px;color:var(--muted);margin-top:4px;white-space:nowrap}}
   .muted{{color:var(--muted);font-size:12px}}
   .ai-box{{font-size:12px;line-height:1.7;color:var(--text)}}
-  .ai-box p{{margin-bottom:6px}}
+  .ai-box p{{margin-bottom:6px;padding-left:10px;border-left:2px solid var(--accent)}}
   .footer{{color:var(--muted);font-size:11px;margin-top:16px}}
 
-  .tabs{{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border)}}
+  .tabs{{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--border)}}
   .tabs input{{display:none}}
-  .tabs label{{padding:10px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}}
+  .tabs label{{padding:10px 18px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}}
   .tab-panel{{display:none}}
   #tab-1:checked ~ .tabs label[for="tab-1"],
   #tab-2:checked ~ .tabs label[for="tab-2"],
-  #tab-3:checked ~ .tabs label[for="tab-3"]{{color:var(--text);border-bottom-color:#38bdf8}}
+  #tab-3:checked ~ .tabs label[for="tab-3"]{{color:var(--text);border-bottom-color:var(--accent)}}
   #tab-1:checked ~ #panel-1,
   #tab-2:checked ~ #panel-2,
   #tab-3:checked ~ #panel-3{{display:block}}

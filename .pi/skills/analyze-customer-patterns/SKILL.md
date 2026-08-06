@@ -24,3 +24,6 @@ python3 -m services.customer.analyze_patterns
 ## 출력
 - `data/output/group_counts.csv`, `region_analysis.csv`, `industry_analysis.csv`, `product_analysis.csv`
 - `data/output/ai_summary.txt`
+
+## 자체 검증
+지역별·업종별 인원 합계가 분석 대상 전체 고객수와 다르면 즉시 실패한다.

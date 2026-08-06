@@ -10,9 +10,9 @@ model: claude-haiku-4-5
 ## 실행 순서
 
 ### 1단계: 데이터 준비 (`prepare-customer-data` 호출)
-- 원본 엑셀(리포지토리 안 "부트캠프" 폴더)을 찾아 CSV로 변환·검증·병합
+- 원본 엑셀(`data/raw/`)을 찾아 CSV로 변환·검증·병합
 - 출력: `merged_data.csv`, `validation_results.csv`
-- 엑셀을 못 찾으면: 어느 폴더에 넣어야 하는지 사용자에게 안내하고 중단
+- 엑셀을 못 찾으면: `data/raw/`에 넣어달라고 사용자에게 안내하고 중단
 
 ### 2단계: 고객 지표 계산 (`calculate-customer-metrics` 호출)
 - 입력: `merged_data.csv`
@@ -58,3 +58,14 @@ model: claude-haiku-4-5
 - 스킬 실행 실패 시: 실패한 단계와 오류 메시지를 기록하고 해당 단계부터 재시도
 - 파일 생성 실패 시: 누락된 파일을 식별하고 해당 단계 재실행
 - 최종 검증 실패 시: 실패 항목과 원인을 명시한 후 해당 단계부터 재실행
+
+## 이중 검증 구조
+- **스킬별 자체 검증(fail fast)**: `calculate-customer-metrics`, `classify-customer-groups`,
+  `analyze-customer-patterns`, `classify-products` 각각이 자기 산출물만으로 확인 가능한
+  이상(행수 불일치, 중복, 알 수 없는 값 등)을 실행 직후 즉시 예외로 발생시킨다. 뒷단계에
+  나쁜 데이터를 흘려보내기 전에 원인 단계를 바로 특정할 수 있다.
+- **통합 검증(`validate-customer-results`)**: 여러 스킬의 산출물을 모아야만 확인 가능한
+  교차 정합성(예: 지역별 인원 합계 = 고객군별 인원 합계)을 마지막에 확인한다. 이건 개별
+  스킬 안에서는 원천적으로 확인이 불가능한 항목들이다.
+- 두 검증은 서로 대체 관계가 아니라 각각 다른 종류의 오류를 잡는다 (단위테스트 vs
+  통합테스트 관계).

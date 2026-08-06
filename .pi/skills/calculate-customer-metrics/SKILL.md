@@ -18,3 +18,7 @@ python3 -m services.customer.metrics
 
 ## 출력
 - `data/output/customer_metrics.csv`
+
+## 자체 검증
+결과 행 수가 `merged_data.csv`의 고유 고객 수와 다르거나 `customer_id`가 중복되면
+그 자리에서 즉시 실패한다 (전체 파이프라인 끝까지 기다리지 않음).

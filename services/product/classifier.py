@@ -267,6 +267,12 @@ def classify_products():
     categories = product_df["item_name"].apply(classify_item)
     product_df[["대분류", "중분류"]] = pd.DataFrame(categories.tolist(), index=product_df.index)
 
+    # 자체 검증: 모든 주문이 분류됐는지(누락 없음), 대분류/중분류가 비어있지 않은지 확인
+    if len(product_df) != len(orders):
+        raise RuntimeError(f"product_classification.csv 행수({len(product_df)})가 orders.csv 행수({len(orders)})와 다릅니다.")
+    if product_df["대분류"].isna().any() or product_df["중분류"].isna().any():
+        raise RuntimeError("분류되지 않은(대분류/중분류가 비어있는) 주문이 있습니다.")
+
     # 분류 결과 저장
     product_df.to_csv(OUTPUT_DIR / "product_classification.csv", index=False, encoding="utf-8-sig")
     print(f"✅ 품목명 분류 완료: {len(product_df)}건")

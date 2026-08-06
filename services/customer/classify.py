@@ -71,6 +71,16 @@ def classify_groups():
         })
 
     df = pd.DataFrame(groups)
+
+    # 자체 검증
+    if df.empty:
+        raise RuntimeError("customer_groups.csv 결과가 비어있습니다.")
+    if df["customer_id"].duplicated().any():
+        raise RuntimeError("한 고객이 customer_groups.csv에 중복으로 들어갔습니다.")
+    invalid_groups = set(df["고객군"]) - {"신규 고객", "일반 고객", "재이용 고객", "이탈 위험 고객"}
+    if invalid_groups:
+        raise RuntimeError(f"고객군에 알 수 없는 값이 있습니다: {invalid_groups}")
+
     df.to_csv(OUTPUT_DIR / "customer_groups.csv", index=False, encoding="utf-8-sig")
 
     # 이탈 위험 고객 목록

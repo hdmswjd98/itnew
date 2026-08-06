@@ -18,8 +18,9 @@ python3 -m services.customer.geocode             # 배송지 GPS 좌표화 (선�
 python3 -m services.customer.validate_and_load   # 필수컬럼·중복·결측 검증 + 유효 주문만 필터링
 python3 -m services.customer.merge_data          # members·orders·deliveries 조인
 ```
-원본 엑셀은 리포지토리 루트 안에 폴더명에 "부트캠프"가 들어간 디렉터리에 있어야 한다
-(`import_real_data.py`의 `find_source_excel()`이 이 폴더를 찾는다).
+원본 엑셀은 `data/raw/`에 넣어야 한다 (`import_real_data.py`의 `find_source_excel()`이
+이 폴더에서 `.xlsx` 파일을 찾는다). `data/raw/`는 `.gitignore`에 걸려있어 git에는
+올라가지 않으므로, 팀원은 이 파일을 별도 경로로 받아 로컬의 `data/raw/`에 직접 넣어야 한다.
 
 ## 출력
 - `data/input/members.csv`, `orders.csv`, `deliveries.csv` (익명화된 표준 CSV)

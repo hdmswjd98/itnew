@@ -1,16 +1,14 @@
 """제공받은 익명 Excel을 분석용 표준 CSV로 변환한다."""
 
 from hashlib import sha256
-from pathlib import Path
 import re
 import unicodedata
 
 import pandas as pd
 
-from .paths import INPUT_DIR, ensure_data_dirs
+from .paths import INPUT_DIR, RAW_DIR, ensure_data_dirs
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
 JEJU_UNITS = [
     "애월읍", "한림읍", "조천읍", "구좌읍", "성산읍", "표선면", "남원읍",
     "대정읍", "안덕면", "한경면", "연동", "노형동", "중문동", "서귀동",
@@ -35,13 +33,9 @@ def _region(address):
 
 
 def find_source_excel():
-    candidates = [
-        path for path in REPO_ROOT.rglob("*.xlsx")
-        if not path.name.startswith("~$")
-        and "부트캠프" in unicodedata.normalize("NFC", str(path.parent))
-    ]
+    candidates = [path for path in RAW_DIR.glob("*.xlsx") if not path.name.startswith("~$")]
     if not candidates:
-        raise FileNotFoundError("[얼른]제주대학교 부트캠프 폴더에서 실제 데이터 Excel을 찾지 못했습니다.")
+        raise FileNotFoundError(f"{RAW_DIR}에서 실제 데이터 Excel을 찾지 못했습니다. 원본 엑셀을 이 폴더에 넣어주세요.")
     return candidates[0]
 
 
@@ -83,9 +77,6 @@ def import_real_data():
     members.to_csv(INPUT_DIR / "members.csv", index=False, encoding="utf-8-sig")
     orders.to_csv(INPUT_DIR / "orders.csv", index=False, encoding="utf-8-sig")
     deliveries.to_csv(INPUT_DIR / "deliveries.csv", index=False, encoding="utf-8-sig")
-    pd.DataFrame(columns=list(orders.columns) + ["오류 사유"]).to_csv(
-        INPUT_DIR / "invalid_orders.csv", index=False, encoding="utf-8-sig"
-    )
 
     print(f"✅ 실제 데이터 변환 완료: {source.name}")
     print(f"  회원 {len(members):,}명 / 배송 주문 {len(orders):,}건")

@@ -31,8 +31,10 @@ Thumbs.db
 /artifacts/
 /references/
 /analysis/
+/data/raw/*
 /data/input/*
 /data/output/*
+!/data/raw/.gitkeep
 !/data/input/.gitkeep
 !/data/output/.gitkeep
 !/data/sample/
@@ -76,7 +78,3 @@ streamlit_dashboard.py
 /실행
 /실행.txt
 
-# 제공받은 실제 데이터 및 문서 (외부 공개 금지)
-/[얼른]제주대학교 부트캠프/
-/[[]*]/
-/\[*

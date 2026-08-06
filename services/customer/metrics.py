@@ -60,6 +60,15 @@ def calc_metrics():
 
     df = pd.DataFrame(metrics)
 
+    # 자체 검증: 이 스킬의 산출물 자체가 말이 되는지 즉시 확인 (전체 파이프라인 끝까지 안 기다림)
+    merged_customer_count = merged["customer_id"].nunique()
+    if len(df) != merged_customer_count:
+        raise RuntimeError(
+            f"customer_metrics.csv 행수({len(df)})가 merged_data.csv 고유 고객수({merged_customer_count})와 다릅니다."
+        )
+    if df["customer_id"].duplicated().any():
+        raise RuntimeError("customer_metrics.csv에 customer_id 중복이 있습니다.")
+
     # 분석 대상 고객: 조회 기간 내 주문 이력이 있는 고객
     period_start = end_date.replace(day=1)
     analysis_customers = merged[merged["order_date_parsed"] >= period_start]["customer_id"].unique()

@@ -37,6 +37,14 @@ def analyze_patterns():
     region_by_group = region_by_group.rename(columns={"destination_region": "region"})
     region_by_group["비율"] = region_by_group.groupby("고객군")["고객 수"].transform(lambda x: (x / x.sum() * 100).round(1))
     region_by_group = region_by_group.sort_values(["고객군", "고객 수"], ascending=[True, False])
+
+    # 자체 검증: 지역별 인원 합계가 분석 대상 전체 인원과 일치해야 한다
+    if int(region_by_group["고객 수"].sum()) != len(analysis_customers):
+        raise RuntimeError(
+            f"region_analysis.csv 인원 합계({int(region_by_group['고객 수'].sum())})가 "
+            f"분석 대상 고객수({len(analysis_customers)})와 다릅니다."
+        )
+
     region_by_group.to_csv(OUTPUT_DIR / "region_analysis.csv", index=False, encoding="utf-8-sig")
 
     analysis_data["order_quantity_num"] = pd.to_numeric(analysis_data["order_quantity_num"], errors="coerce")
@@ -49,6 +57,14 @@ def analyze_patterns():
     ).reset_index().rename(columns={"고객_수": "고객 수", "member_type": "industry"})
     industry_by_group["비율"] = industry_by_group.groupby("고객군")["고객 수"].transform(lambda x: (x / x.sum() * 100).round(1))
     industry_by_group = industry_by_group.sort_values(["고객군", "주문_건수"], ascending=[True, False])
+
+    # 자체 검증: 업종별 인원 합계가 분석 대상 전체 인원과 일치해야 한다
+    if int(industry_by_group["고객 수"].sum()) != len(analysis_customers):
+        raise RuntimeError(
+            f"industry_analysis.csv 인원 합계({int(industry_by_group['고객 수'].sum())})가 "
+            f"분석 대상 고객수({len(analysis_customers)})와 다릅니다."
+        )
+
     industry_by_group.to_csv(OUTPUT_DIR / "industry_analysis.csv", index=False, encoding="utf-8-sig")
 
     # 4. 품목 특성

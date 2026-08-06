@@ -30,3 +30,8 @@ python3 -m services.customer.classify
 - `data/output/churn_scores.csv`
 - `data/output/customer_groups.csv`
 - `data/output/churn_risk_customers.csv`
+
+## 자체 검증
+`churn.py`: 결과 행 수가 `customer_metrics.csv`와 다르거나 이탈 위험 등급에 알 수 없는
+값이 있으면 즉시 실패. `classify.py`: 결과가 비어있거나, 한 고객이 중복으로 들어갔거나,
+고객군에 알 수 없는 값(신규/일반/재이용/이탈위험 4개 외)이 있으면 즉시 실패.

@@ -61,6 +61,14 @@ def score_churn():
         })
 
     df = pd.DataFrame(scores)
+
+    # 자체 검증
+    if len(df) != len(metrics):
+        raise RuntimeError(f"churn_scores.csv 행수({len(df)})가 customer_metrics.csv 행수({len(metrics)})와 다릅니다.")
+    invalid_grades = set(df["이탈 위험 등급"]) - {"정상", "주의", "위험", "판정 제외", "판정 보류"}
+    if invalid_grades:
+        raise RuntimeError(f"이탈 위험 등급에 알 수 없는 값이 있습니다: {invalid_grades}")
+
     df.to_csv(OUTPUT_DIR / "churn_scores.csv", index=False, encoding="utf-8-sig")
 
     print("📊 이탈 위험 점수 산정 완료")

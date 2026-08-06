@@ -29,3 +29,7 @@ Next.js에서는 `/api/products/actions`의 `refresh`(재분류) · `save_rules`
 ## 출력
 - `data/output/product_classification.csv` (주문별 분류 결과)
 - `data/output/category_summary.csv`
+
+## 자체 검증
+분류 결과 행 수가 `orders.csv`와 다르거나(누락된 주문 있음), 대분류·중분류가 비어있는
+행이 있으면 즉시 실패한다.

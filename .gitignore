@@ -41,40 +41,11 @@ Thumbs.db
 !/data/sample/**
 /data/sample/__pycache__/
 
-# 로컬 월간보고서 DB
-dashboards/monthly/data/*.db
-dashboards/monthly/data/*.db-*
-
-# 입력 데이터 — 개인정보 보호를 위해 Git에서 제외
-dashboards/customer/data/input/*.csv
-
-# 빈 폴더 구조는 Git에 유지
-!dashboards/customer/data/input/.gitkeep
-!dashboards/customer/data/output/.gitkeep
-
-# 고객 분석 결과 — 실행 시 재생성
-customer_metrics.csv
-customer_groups.csv
-churn_risk_customers.csv
-region_analysis.csv
-industry_analysis.csv
-product_analysis.csv
-ai_summary.txt
-validation_results.csv
-validation_final.csv
-invalid_records.csv
-customer_analysis_result.md
-valid_orders.csv
-merged_data.csv
-valid_orders_raw.csv
-group_counts.csv
-dashboards/customer/data/output/*
-!dashboards/customer/data/output/.gitkeep
-
-# 기존 단독 대시보드에서 생성되는 파일
-streamlit_dashboard.py
-
 # 개인 실행 메모
 /실행
 /실행.txt
+
+# 원본 데이터 — 개인정보/대외비 보호를 위해 어디에 있든 Git에서 제외
+# (에이전트 실행 환경에 따라 data/raw/가 아니라 워크스페이스 루트에 놓일 수 있음)
+*.xlsx
 

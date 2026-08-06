@@ -6,7 +6,7 @@ import unicodedata
 
 import pandas as pd
 
-from .paths import INPUT_DIR, RAW_DIR, ensure_data_dirs
+from .paths import INPUT_DIR, RAW_DIR, REPO_ROOT, ensure_data_dirs
 
 
 JEJU_UNITS = [
@@ -34,9 +34,15 @@ def _region(address):
 
 def find_source_excel():
     candidates = [path for path in RAW_DIR.glob("*.xlsx") if not path.name.startswith("~$")]
-    if not candidates:
-        raise FileNotFoundError(f"{RAW_DIR}에서 실제 데이터 Excel을 찾지 못했습니다. 원본 엑셀을 이 폴더에 넣어주세요.")
-    return candidates[0]
+    if candidates:
+        return candidates[0]
+    # data/raw/에 없으면 워크스페이스 루트에서 찾는다 (에이전트 실행 환경이 업로드 파일을
+    # data/raw/가 아니라 루트에 놓는 경우 대응 — 예: Timely 채팅 파일 업로드는 워크스페이스
+    # 루트에 자동 배치됨)
+    root_candidates = [path for path in REPO_ROOT.glob("*.xlsx") if not path.name.startswith("~$")]
+    if root_candidates:
+        return root_candidates[0]
+    raise FileNotFoundError(f"{RAW_DIR} 또는 워크스페이스 루트에서 실제 데이터 Excel을 찾지 못했습니다. 원본 엑셀 파일을 업로드해주세요.")
 
 
 def import_real_data():

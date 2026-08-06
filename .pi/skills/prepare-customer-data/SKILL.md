@@ -18,9 +18,11 @@ python3 -m services.customer.geocode             # 배송지 GPS 좌표화 (선�
 python3 -m services.customer.validate_and_load   # 필수컬럼·중복·결측 검증 + 유효 주문만 필터링
 python3 -m services.customer.merge_data          # members·orders·deliveries 조인
 ```
-원본 엑셀은 `data/raw/`에 넣어야 한다 (`import_real_data.py`의 `find_source_excel()`이
-이 폴더에서 `.xlsx` 파일을 찾는다). `data/raw/`는 `.gitignore`에 걸려있어 git에는
-올라가지 않으므로, 팀원은 이 파일을 별도 경로로 받아 로컬의 `data/raw/`에 직접 넣어야 한다.
+원본 엑셀은 `data/raw/`에 넣으면 된다. 거기에 없으면 워크스페이스 루트에서도 자동으로
+찾는다(`find_source_excel()`이 두 위치를 순서대로 확인) — 채팅에 엑셀을 업로드하면
+워크스페이스 루트에 자동 배치되는 실행 환경(예: 타임리)에서도 별도 이동 없이 바로
+동작한다. 엑셀 파일은 어디에 있든 `.gitignore`(`*.xlsx`)로 git에서 제외되므로, 팀원은
+이 파일을 별도 경로로 받아 각자 로컬(또는 각자 채팅)에 직접 넣어야 한다.
 
 ## 출력
 - `data/input/members.csv`, `orders.csv`, `deliveries.csv` (익명화된 표준 CSV)

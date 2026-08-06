@@ -10,9 +10,9 @@ model: claude-haiku-4-5
 ## 실행 순서
 
 ### 1단계: 데이터 준비 (`prepare-customer-data` 호출)
-- 원본 엑셀(`data/raw/`)을 찾아 CSV로 변환·검증·병합
+- 원본 엑셀(`data/raw/` 또는 워크스페이스 루트)을 찾아 CSV로 변환·검증·병합
 - 출력: `merged_data.csv`, `validation_results.csv`
-- 엑셀을 못 찾으면: `data/raw/`에 넣어달라고 사용자에게 안내하고 중단
+- 엑셀을 못 찾으면: `data/raw/`에 넣거나 채팅에 업로드해달라고 사용자에게 안내하고 중단
 
 ### 2단계: 고객 지표 계산 (`calculate-customer-metrics` 호출)
 - 입력: `merged_data.csv`

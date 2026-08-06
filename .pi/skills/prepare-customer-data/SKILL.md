@@ -29,3 +29,8 @@ python3 -m services.customer.merge_data          # members·orders·deliveries �
 - `data/output/validation_results.csv`, `invalid_records.csv` (검증 결과)
 - `data/output/valid_orders_raw.csv` (유효 주문만 남긴 데이터)
 - `data/output/merged_data.csv` (다음 스킬들이 사용하는 병합 데이터셋)
+
+## 자체 검증
+`order_id`는 `import_real_data.py`가 순번으로 생성해 원래 중복이 있을 수 없다.
+`orders.csv`에 중복 `order_id`가 있으면(앞단이 잘못됐다는 신호) 검증 리포트를 저장한
+뒤 즉시 실패한다 (조용히 첫 건만 남기고 넘어가지 않는다).

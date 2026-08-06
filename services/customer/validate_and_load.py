@@ -60,12 +60,19 @@ def validate_and_load():
     for row in results:
         print(f"  {'✅' if row['상태'] == '통과' else '❌'} {row['항목']}: {row['상태']}")
 
+    # 자체 검증: order_id는 import_real_data.py가 순번으로 생성해 원래 중복이 있을 수 없다.
+    # 중복이 발견되면 앞단(엑셀 변환 등)에서 뭔가 잘못된 것이므로, 조용히 첫 건만 남기지 않고
+    # 리포트를 저장한 뒤 즉시 실패시킨다.
+    if duplicate_orders.any():
+        raise RuntimeError(
+            f"orders.csv에 중복 order_id가 {int(duplicate_orders.sum())}건 있습니다 "
+            f"(정상적으로는 발생할 수 없음 — validation_results.csv 확인 필요)."
+        )
+
     # 유효 주문만 남긴다 — 검증에서 쓴 것과 동일한 customer_id/날짜/수량 조건을 그대로 재사용.
-    # (중복 order_id는 별도 배제하지 않고, 첫 번째 건만 남기고 나머지만 제거한다.)
     valid_orders = orders[~bad_order_id & ~bad_customer & ~bad_date & ~bad_quantity].copy()
     valid_orders["order_quantity_num"] = quantities[valid_orders.index]
     valid_orders["order_date_parsed"] = order_dates[valid_orders.index]
-    valid_orders = valid_orders.drop_duplicates("order_id", keep="first")
     valid_orders.to_csv(OUTPUT_DIR / "valid_orders_raw.csv", index=False, encoding="utf-8-sig")
     print(f"📊 유효 배송 주문: {len(valid_orders):,}건 / 제외 {len(orders) - len(valid_orders):,}건")
 
